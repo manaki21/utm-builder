@@ -297,9 +297,11 @@ export default function Page() {
               disabled={sortField === 'all'}
             >
               <option value="">All</option>
-              {(sortField === 'source' ? sourceOptions : sortField === 'medium' ? mediumOptions : sortField === 'campaign' ? campaignOptions : sortField === 'url' ? urlOptions : []).map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
+              {((sortField === 'source' ? sourceOptions : sortField === 'medium' ? mediumOptions : sortField === 'campaign' ? campaignOptions : sortField === 'url' ? urlOptions : [])
+                .filter((opt): opt is string => typeof opt === 'string'))
+                .map((opt: string) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
             </select>
             <button
               className="p-2 border border-gray-300 rounded-lg text-base text-gray-700 hover:bg-purple-100 ml-2"
