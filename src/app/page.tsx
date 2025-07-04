@@ -42,10 +42,36 @@ export default function Page() {
   const [fieldFilter, setFieldFilter] = useState('');
   const [historyLimit, setHistoryLimit] = useState(10);
 
+  // Custom sources/mediums (persisted)
+  const [customSources, setCustomSources] = useState<string[]>([]);
+  const [customMediums, setCustomMediums] = useState<string[]>([]);
+  const [showCustomSourceInput, setShowCustomSourceInput] = useState(false);
+  const [showCustomMediumInput, setShowCustomMediumInput] = useState(false);
+  const [newCustomSource, setNewCustomSource] = useState('');
+  const [newCustomMedium, setNewCustomMedium] = useState('');
+
   useEffect(() => {
     const stored = typeof window !== 'undefined' ? localStorage.getItem('utmHistory') : null;
     if (stored) setHistory(JSON.parse(stored));
   }, []);
+
+  // Load custom sources/mediums from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const cs = localStorage.getItem('customSources');
+      if (cs) setCustomSources(JSON.parse(cs));
+      const cm = localStorage.getItem('customMediums');
+      if (cm) setCustomMediums(JSON.parse(cm));
+    }
+  }, []);
+
+  // Save custom sources/mediums to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('customSources', JSON.stringify(customSources));
+      localStorage.setItem('customMediums', JSON.stringify(customMediums));
+    }
+  }, [customSources, customMediums]);
 
   useEffect(() => {
     if (baseURL && source && medium) {
@@ -189,6 +215,26 @@ export default function Page() {
     setTimeout(() => setCopiedHistoryId(null), 1200);
   };
 
+  const allSources = [...sources, ...customSources];
+  const allMediums = [...mediums, ...customMediums];
+
+  const handleAddCustomSource = () => {
+    if (newCustomSource && !allSources.includes(newCustomSource)) {
+      setCustomSources(prev => [...prev, newCustomSource]);
+      setSource(newCustomSource);
+    }
+    setShowCustomSourceInput(false);
+    setNewCustomSource('');
+  };
+  const handleAddCustomMedium = () => {
+    if (newCustomMedium && !allMediums.includes(newCustomMedium)) {
+      setCustomMediums(prev => [...prev, newCustomMedium]);
+      setMedium(newCustomMedium);
+    }
+    setShowCustomMediumInput(false);
+    setNewCustomMedium('');
+  };
+
   // When filters/search change, reset historyLimit
   useEffect(() => {
     setHistoryLimit(10);
@@ -225,14 +271,72 @@ export default function Page() {
             />
 
             <div className="flex gap-4">
-              <select className="w-1/2 p-3 border border-gray-300 rounded-lg text-gray-900 text-base" value={source} onChange={e => setSource(e.target.value)}>
-                <option value="">Select Source</option>
-                {sources.map(src => <option key={src} value={src}>{src}</option>)}
-              </select>
-              <select className="w-1/2 p-3 border border-gray-300 rounded-lg text-gray-900 text-base" value={medium} onChange={e => setMedium(e.target.value)}>
-                <option value="">Select Medium</option>
-                {mediums.map(med => <option key={med} value={med}>{med}</option>)}
-              </select>
+              <div className="w-1/2">
+                <select className="w-full p-3 border border-gray-300 rounded-lg text-gray-900 text-base" value={showCustomSourceInput ? 'custom' : source} onChange={e => {
+                  if (e.target.value === 'custom') {
+                    setShowCustomSourceInput(true);
+                  } else {
+                    setSource(e.target.value);
+                  }
+                }}>
+                  <option value="">Select Source</option>
+                  {allSources.map(src => <option key={src} value={src}>{src}</option>)}
+                  <option value="custom">Add custom…</option>
+                </select>
+                {showCustomSourceInput && (
+                  <div className="flex mt-2 gap-2">
+                    <input
+                      className="flex-1 p-2 border border-gray-300 rounded-lg text-gray-900 text-base"
+                      placeholder="Enter custom source"
+                      value={newCustomSource}
+                      onChange={e => setNewCustomSource(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') handleAddCustomSource(); }}
+                      autoFocus
+                    />
+                    <button
+                      className="px-3 py-1 bg-blue-500 text-white rounded-lg text-sm font-semibold"
+                      onClick={handleAddCustomSource}
+                    >Add</button>
+                    <button
+                      className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold"
+                      onClick={() => { setShowCustomSourceInput(false); setNewCustomSource(''); }}
+                    >Cancel</button>
+                  </div>
+                )}
+              </div>
+              <div className="w-1/2">
+                <select className="w-full p-3 border border-gray-300 rounded-lg text-gray-900 text-base" value={showCustomMediumInput ? 'custom' : medium} onChange={e => {
+                  if (e.target.value === 'custom') {
+                    setShowCustomMediumInput(true);
+                  } else {
+                    setMedium(e.target.value);
+                  }
+                }}>
+                  <option value="">Select Medium</option>
+                  {allMediums.map(med => <option key={med} value={med}>{med}</option>)}
+                  <option value="custom">Add custom…</option>
+                </select>
+                {showCustomMediumInput && (
+                  <div className="flex mt-2 gap-2">
+                    <input
+                      className="flex-1 p-2 border border-gray-300 rounded-lg text-gray-900 text-base"
+                      placeholder="Enter custom medium"
+                      value={newCustomMedium}
+                      onChange={e => setNewCustomMedium(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') handleAddCustomMedium(); }}
+                      autoFocus
+                    />
+                    <button
+                      className="px-3 py-1 bg-blue-500 text-white rounded-lg text-sm font-semibold"
+                      onClick={handleAddCustomMedium}
+                    >Add</button>
+                    <button
+                      className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold"
+                      onClick={() => { setShowCustomMediumInput(false); setNewCustomMedium(''); }}
+                    >Cancel</button>
+                  </div>
+                )}
+              </div>
             </div>
 
             <input
