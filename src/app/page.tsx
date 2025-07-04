@@ -299,7 +299,7 @@ export default function Page() {
               <option value="">All</option>
               {((sortField === 'source' ? sourceOptions : sortField === 'medium' ? mediumOptions : sortField === 'campaign' ? campaignOptions : sortField === 'url' ? urlOptions : [])
                 .filter((opt): opt is string => typeof opt === 'string'))
-                .map((opt: string) => (
+                .map((opt) => (
                   <option key={opt} value={opt}>{opt}</option>
                 ))}
             </select>
