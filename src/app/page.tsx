@@ -1,6 +1,16 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import Image from 'next/image';
+
+type HistoryEntry = {
+  id: string;
+  url: string;
+  source?: string;
+  medium?: string;
+  campaign?: string;
+  timestamp: string;
+};
 
 const sources = [
   'google', 'twitter', 'linkedin', 'instagram', 'youtube', 'signature', 'newsletter',
@@ -18,10 +28,10 @@ export default function Page() {
   const [medium, setMedium] = useState('');
   const [campaign, setCampaign] = useState('');
   const [generatedURL, setGeneratedURL] = useState('');
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [filter, setFilter] = useState('');
   const [copied, setCopied] = useState(false);
-  const [filterCategory, setFilterCategory] = useState<'campaign' | 'url'>('campaign');
+  const [filterCategory] = useState<'all' | 'source' | 'medium' | 'campaign' | 'url'>('all');
   const [search, setSearch] = useState('');
   const [copiedHistoryId, setCopiedHistoryId] = useState<string | null>(null);
   // Date filter/sort state
@@ -29,7 +39,6 @@ export default function Page() {
   const [monthFilter, setMonthFilter] = useState('');
   // Sort/filter by field
   const [sortField, setSortField] = useState<'all' | 'source' | 'medium' | 'campaign' | 'url'>('all');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [fieldFilter, setFieldFilter] = useState('');
   const [historyLimit, setHistoryLimit] = useState(10);
 
@@ -139,18 +148,21 @@ export default function Page() {
     }
   });
   // Sort by field (always ascending)
-  filteredHistory.sort((a, b) => {
-    let aVal = sortField === 'url' ? getBaseUrl(a.url) : a[sortField] || '';
-    let bVal = sortField === 'url' ? getBaseUrl(b.url) : b[sortField] || '';
-    if (aVal < bVal) return -1;
-    if (aVal > bVal) return 1;
-    return 0;
-  });
-
-  // Get unique filter options for the selected category
-  const filterOptions = filterCategory === 'campaign'
-    ? Array.from(new Set(history.map(h => h.campaign).filter(Boolean)))
-    : Array.from(new Set(history.map(h => getBaseUrl(h.url)).filter(Boolean)));
+  if (sortField !== 'all') {
+    filteredHistory.sort((a, b) => {
+      let aVal = '', bVal = '';
+      if (sortField === 'url') {
+        aVal = getBaseUrl(a.url);
+        bVal = getBaseUrl(b.url);
+      } else if (sortField === 'source' || sortField === 'medium' || sortField === 'campaign') {
+        aVal = a[sortField] || '';
+        bVal = b[sortField] || '';
+      }
+      if (aVal < bVal) return -1;
+      if (aVal > bVal) return 1;
+      return 0;
+    });
+  }
 
   // Get unique months for month filter
   const monthOptions = Array.from(new Set(history.map(h => {
@@ -201,7 +213,7 @@ export default function Page() {
       <div className="flex flex-col lg:flex-row gap-8 w-full max-w-6xl">
         <div className="w-full lg:w-1/2 bg-white rounded-2xl shadow-2xl p-8 border border-gray-100 lg:max-h-[90vh] lg:overflow-auto">
           <div className="flex justify-center mb-1">
-            <img src="/logo.png" alt="Logo" className="h-28 w-28 object-contain" />
+            <Image src="/logo.png" alt="Logo" width={112} height={112} className="object-contain" />
           </div>
           <h1 className="text-4xl font-comfortaa text-center mb-8 text-blue-700 leading-tight">UTM Link Builder</h1>
           <div className="space-y-4">
