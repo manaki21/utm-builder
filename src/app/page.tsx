@@ -276,7 +276,7 @@ export default function Page() {
               className="p-2 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-purple-300 text-gray-900"
               value={sortField}
               onChange={e => {
-                const val = e.target.value as any;
+                const val = e.target.value as typeof sortField;
                 setSortField(val);
                 setFieldFilter('');
               }}
