@@ -403,7 +403,7 @@ export default function Page() {
   const [bitlyLoading, setBitlyLoading] = useState(false);
   const [bitlyResult, setBitlyResult] = useState<{ url: string; duplicate: boolean } | null>(null);
   // Tabs: All, UTM Links, Shortlinks
-  const [historyTab, setHistoryTab] = useState<'all' | 'utm' | 'shortlinks'>('all');
+  const [historyTab] = useState<'all' | 'utm' | 'shortlinks'>('all');
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [shortlinks, setShortlinks] = useState<{ utm_url: string; bitly_url: string; created_at: string }[]>([]);
 
