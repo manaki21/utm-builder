@@ -336,9 +336,11 @@ export default function Page() {
     }
   };
 
-  const [activeTab, setActiveTab] = useState<'history' | 'shortlinks'>('history');
   const [bitlyLoading, setBitlyLoading] = useState(false);
   const [bitlyResult, setBitlyResult] = useState<{ url: string; duplicate: boolean } | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [activeTab, setActiveTab] = useState<'history' | 'shortlinks'>('history');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [shortlinks, setShortlinks] = useState<{ utm_url: string; bitly_url: string; created_at: string }[]>([]);
 
   // Fetch shortlinks for the tab
