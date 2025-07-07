@@ -411,6 +411,14 @@ export default function Page() {
     displayedHistory = filteredHistory.filter(h => h.bitly_url);
   }
 
+  // Helper to smartly truncate a URL (show start and end, hide middle)
+  function smartTruncateUrl(url: string, maxLength = 56) {
+    if (url.length <= maxLength) return url;
+    const start = url.slice(0, 28);
+    const end = url.slice(-22);
+    return `${start}…${end}`;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100 flex flex-col items-center justify-center py-8 px-2">
       {showTutorial && (
@@ -778,17 +786,18 @@ export default function Page() {
               >
                 {/* Top row: Link, copy chip, Bitly chip */}
                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                  {/* Blue link icon + link (truncated) */}
-                  <span className="flex items-center gap-1 max-w-xs truncate">
+                  {/* Blue link icon + link (smart truncated, tooltip) */}
+                  <span className="flex items-center gap-1 max-w-[400px] truncate" title={entry.url}>
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="#2563eb"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 010 5.656m-3.656-3.656a4 4 0 015.656 0m-7.778 7.778a4 4 0 005.656 0l4.242-4.242a4 4 0 00-5.656-5.656l-1.414 1.414" /></svg>
                     <a
                       href={entry.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-700 font-semibold hover:underline max-w-[180px] truncate"
+                      className="text-blue-700 font-semibold hover:underline max-w-[360px] truncate"
                       style={{ fontSize: '0.98rem', verticalAlign: 'middle', display: 'inline-block' }}
+                      title={entry.url}
                     >
-                      {entry.url ? (entry.url.length > 48 ? entry.url.slice(0, 48) + '…' : entry.url) : '(empty)'}
+                      {smartTruncateUrl(entry.url, 56)}
                     </a>
                   </span>
                   {/* Copy chip */}
