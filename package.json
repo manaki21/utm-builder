@@ -9,13 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.39.7",
     "@types/uuid": "^10.0.0",
     "next": "15.3.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "uuid": "^11.1.0",
-    "better-sqlite3": "^8.4.0",
-    "@supabase/supabase-js": "^2.39.7"
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
