@@ -58,6 +58,9 @@ export default function Page() {
   const [term, setTerm] = useState('');
   const [content, setContent] = useState('');
 
+  // Step state
+  const [step, setStep] = useState(1);
+
   // Replace localStorage history logic with API calls
   useEffect(() => {
     async function fetchHistory() {
@@ -117,6 +120,14 @@ export default function Page() {
       setGeneratedURL('');
     }
   }, [baseURL, source, medium, campaign, term, content]);
+
+  // Step logic: advance as fields are filled
+  useEffect(() => {
+    if (!baseURL) setStep(1);
+    else if (!source) setStep(2);
+    else if (!medium) setStep(3);
+    else setStep(4);
+  }, [baseURL, source, medium]);
 
   const saveToHistory = async () => {
     if (!generatedURL) return;
@@ -359,6 +370,28 @@ export default function Page() {
           Need Help?
         </button>
       )}
+      {/* Add a stepper at the top */}
+      <div className="w-full max-w-3xl mx-auto flex justify-center gap-4 mb-4 animate-fade-in">
+        <div className={`flex flex-col items-center ${step === 1 ? 'text-purple-700 font-bold' : 'text-gray-400'}`}>
+          <div className={`rounded-full w-7 h-7 flex items-center justify-center border-2 ${step === 1 ? 'border-purple-500 bg-white focus-pulse' : 'border-gray-300 bg-gray-100'}`}>1</div>
+          <span className="text-xs mt-1">URL</span>
+        </div>
+        <div className="h-7 w-8 border-t-2 border-gray-200 mt-3"></div>
+        <div className={`flex flex-col items-center ${step === 2 ? 'text-purple-700 font-bold' : 'text-gray-400'}`}>
+          <div className={`rounded-full w-7 h-7 flex items-center justify-center border-2 ${step === 2 ? 'border-purple-500 bg-white focus-pulse' : 'border-gray-300 bg-gray-100'}`}>2</div>
+          <span className="text-xs mt-1">Source</span>
+        </div>
+        <div className="h-7 w-8 border-t-2 border-gray-200 mt-3"></div>
+        <div className={`flex flex-col items-center ${step === 3 ? 'text-purple-700 font-bold' : 'text-gray-400'}`}>
+          <div className={`rounded-full w-7 h-7 flex items-center justify-center border-2 ${step === 3 ? 'border-purple-500 bg-white focus-pulse' : 'border-gray-300 bg-gray-100'}`}>3</div>
+          <span className="text-xs mt-1">Medium</span>
+        </div>
+        <div className="h-7 w-8 border-t-2 border-gray-200 mt-3"></div>
+        <div className={`flex flex-col items-center ${step === 4 ? 'text-purple-700 font-bold' : 'text-gray-400'}`}>
+          <div className={`rounded-full w-7 h-7 flex items-center justify-center border-2 ${step === 4 ? 'border-purple-500 bg-white focus-pulse' : 'border-gray-300 bg-gray-100'}`}>4</div>
+          <span className="text-xs mt-1">Campaign</span>
+        </div>
+      </div>
       <div className="flex flex-col lg:flex-row gap-8 w-full max-w-6xl">
         <div className="w-full lg:w-1/2 bg-white rounded-2xl shadow-2xl p-8 border border-gray-100 lg:max-h-[90vh] lg:overflow-auto">
           <div className="flex justify-center mb-1">
@@ -366,8 +399,9 @@ export default function Page() {
           </div>
           <h1 className="text-4xl font-comfortaa text-center mb-8 text-blue-700 leading-tight">UTM Link Builder</h1>
           <div className="space-y-4">
+            {/* Add animation and focus pulse to form fields */}
             <input
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-900 text-base"
+              className={`w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-900 text-base animate-slide-in-up ${step === 1 ? 'focus-pulse border-purple-500' : ''}`}
               placeholder="Base URL (e.g. https://example.com)"
               value={baseURL}
               onChange={e => setBaseURL(e.target.value)}
@@ -375,13 +409,17 @@ export default function Page() {
 
             <div className="flex gap-4">
               <div className="w-1/2">
-                <select className="w-full p-3 border border-gray-300 rounded-lg text-gray-900 text-base" value={showCustomSourceInput ? 'custom' : source} onChange={e => {
-                  if (e.target.value === 'custom') {
-                    setShowCustomSourceInput(true);
-                  } else {
-                    setSource(e.target.value);
-                  }
-                }}>
+                <select
+                  className={`w-full p-3 border border-gray-300 rounded-lg text-gray-900 text-base animate-slide-in-up ${step === 2 ? 'focus-pulse border-purple-500' : ''}`}
+                  value={showCustomSourceInput ? 'custom' : source}
+                  onChange={e => {
+                    if (e.target.value === 'custom') {
+                      setShowCustomSourceInput(true);
+                    } else {
+                      setSource(e.target.value);
+                    }
+                  }}
+                >
                   <option value="">Select Source</option>
                   {allSources.map(src => <option key={src} value={src}>{src}</option>)}
                   <option value="custom">Add custom…</option>
@@ -408,13 +446,17 @@ export default function Page() {
                 )}
               </div>
               <div className="w-1/2">
-                <select className="w-full p-3 border border-gray-300 rounded-lg text-gray-900 text-base" value={showCustomMediumInput ? 'custom' : medium} onChange={e => {
-                  if (e.target.value === 'custom') {
-                    setShowCustomMediumInput(true);
-                  } else {
-                    setMedium(e.target.value);
-                  }
-                }}>
+                <select
+                  className={`w-full p-3 border border-gray-300 rounded-lg text-gray-900 text-base animate-slide-in-up ${step === 3 ? 'focus-pulse border-purple-500' : ''}`}
+                  value={showCustomMediumInput ? 'custom' : medium}
+                  onChange={e => {
+                    if (e.target.value === 'custom') {
+                      setShowCustomMediumInput(true);
+                    } else {
+                      setMedium(e.target.value);
+                    }
+                  }}
+                >
                   <option value="">Select Medium</option>
                   {allMediums.map(med => <option key={med} value={med}>{med}</option>)}
                   <option value="custom">Add custom…</option>
@@ -442,8 +484,9 @@ export default function Page() {
               </div>
             </div>
 
+            {/* Add animation and focus pulse to form fields */}
             <input
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-900 text-base"
+              className={`w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-900 text-base animate-slide-in-up ${step === 4 ? 'focus-pulse border-purple-500' : ''}`}
               placeholder="Campaign (optional)"
               value={campaign}
               onChange={e => setCampaign(e.target.value)}
