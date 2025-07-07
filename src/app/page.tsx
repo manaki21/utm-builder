@@ -13,6 +13,7 @@ type HistoryEntry = {
   timestamp: string;
   term?: string;
   content?: string;
+  bitly_url?: string;
 };
 
 const sources = [
@@ -338,19 +339,18 @@ export default function Page() {
 
   const [bitlyLoading, setBitlyLoading] = useState(false);
   const [bitlyResult, setBitlyResult] = useState<{ url: string; duplicate: boolean } | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [activeTab, setActiveTab] = useState<'history' | 'shortlinks'>('history');
+  const [historyTab, setHistoryTab] = useState<'all' | 'shortlinks'>('all');
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [shortlinks, setShortlinks] = useState<{ utm_url: string; bitly_url: string; created_at: string }[]>([]);
 
   // Fetch shortlinks for the tab
   useEffect(() => {
-    if (activeTab === 'shortlinks') {
+    if (historyTab === 'shortlinks') {
       fetch('/api/bitly?all=1').then(res => res.json()).then(data => {
         if (Array.isArray(data)) setShortlinks(data);
       });
     }
-  }, [activeTab]);
+  }, [historyTab]);
 
   // Bitly button handler
   const handleBitly = async () => {
@@ -365,7 +365,44 @@ export default function Page() {
     setBitlyLoading(false);
     if (data.bitly_url) setBitlyResult({ url: data.bitly_url, duplicate: data.duplicate });
     else setBitlyResult(null);
+    // Update history entry in Supabase and local state
+    if (data.bitly_url) {
+      // Find the history entry by url
+      const entry = history.find(h => h.url === generatedURL);
+      if (entry) {
+        // Update in Supabase
+        await fetch('/api/history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...entry, bitly_url: data.bitly_url })
+        });
+        // Update in local state
+        setHistory(prev => prev.map(h => h.url === generatedURL ? { ...h, bitly_url: data.bitly_url } : h));
+      } else {
+        // If not found, add a new entry
+        const newEntry = {
+          id: uuidv4(),
+          url: generatedURL,
+          source,
+          medium,
+          campaign,
+          term,
+          content,
+          timestamp: new Date().toISOString(),
+          bitly_url: data.bitly_url
+        };
+        await fetch('/api/history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newEntry)
+        });
+        setHistory(prev => [newEntry, ...prev]);
+      }
+    }
   };
+
+  // Filter history for the selected tab
+  const displayedHistory = historyTab === 'shortlinks' ? filteredHistory.filter(h => h.bitly_url) : filteredHistory;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100 flex flex-col items-center justify-center py-8 px-2">
@@ -622,6 +659,21 @@ export default function Page() {
               Export
             </button>
           </div>
+          <div className="flex gap-2 mb-4">
+            <button
+              className={`px-4 py-2 rounded-t-lg font-semibold text-base border-b-2 transition ${historyTab === 'all' ? 'border-purple-500 text-purple-700 bg-white' : 'border-transparent text-gray-400 bg-gray-50 hover:text-purple-500'}`}
+              onClick={() => setHistoryTab('all')}
+            >
+              All
+            </button>
+            <button
+              className={`px-4 py-2 rounded-t-lg font-semibold text-base border-b-2 transition flex items-center gap-2 ${historyTab === 'shortlinks' ? 'border-[#ee6123] text-[#ee6123] bg-white' : 'border-transparent text-gray-400 bg-gray-50 hover:text-[#ee6123]'}`}
+              onClick={() => setHistoryTab('shortlinks')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-5 w-5" fill="#ee6123"><path d="M23.6 8.4c-2.1-2.1-5.5-2.1-7.6 0l-6.2 6.2c-2.1 2.1-2.1 5.5 0 7.6 2.1 2.1 5.5 2.1 7.6 0l1.2-1.2c.4-.4.4-1 0-1.4s-1-.4-1.4 0l-1.2 1.2c-1.3 1.3-3.3 1.3-4.6 0-1.3-1.3-1.3-3.3 0-4.6l6.2-6.2c1.3-1.3 3.3-1.3 4.6 0 1.3 1.3 1.3 3.3 0 4.6l-.7.7c-.4.4-.4 1 0 1.4.4.4 1 .4 1.4 0l.7-.7c2.1-2.1 2.1-5.5 0-7.6z"/></svg>
+              Shortlinks Only
+            </button>
+          </div>
           <div className="flex flex-wrap gap-2 items-center bg-purple-50 border border-purple-100 rounded-xl px-4 py-3 mb-4">
             <span className="text-sm text-purple-700 font-semibold mr-2">Sort/Filter by:</span>
             <select
@@ -692,7 +744,8 @@ export default function Page() {
             {filteredHistory.length === 0 && (
               <div className="text-center text-gray-400 py-8 bg-white rounded-lg shadow-inner text-base">No history found.</div>
             )}
-            {filteredHistory.slice(0, historyLimit).map(entry => (
+            {/* Filter history for the selected tab */}
+            {displayedHistory.slice(0, historyLimit).map(entry => (
               <div
                 key={entry.id}
                 className={`bg-white border border-gray-200 p-4 rounded-xl shadow hover:shadow-lg transition mb-2 flex flex-col gap-2 ${entry.id === newlyAddedId ? 'bg-green-50 border-green-400 animate-fade-highlight' : ''}`}
@@ -715,6 +768,12 @@ export default function Page() {
                       )}
                       {entry.content && (
                         <span className="bg-pink-100 text-pink-800 text-xs font-semibold px-2 py-0.5 rounded-full">Content: {entry.content}</span>
+                      )}
+                      {entry.bitly_url && (
+                        <a href={entry.bitly_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[#ee6123] font-bold text-xs hover:underline">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-4 w-4" fill="#ee6123"><path d="M23.6 8.4c-2.1-2.1-5.5-2.1-7.6 0l-6.2 6.2c-2.1 2.1-2.1 5.5 0 7.6 2.1 2.1 5.5 2.1 7.6 0l1.2-1.2c.4-.4.4-1 0-1.4s-1-.4-1.4 0l-1.2 1.2c-1.3 1.3-3.3 1.3-4.6 0-1.3-1.3-1.3-3.3 0-4.6l6.2-6.2c1.3-1.3 3.3-1.3 4.6 0 1.3 1.3 1.3 3.3 0 4.6l-.7.7c-.4.4-.4 1 0 1.4.4.4 1 .4 1.4 0l.7-.7c2.1-2.1 2.1-5.5 0-7.6z"/></svg>
+                          Bitly
+                        </a>
                       )}
                     </div>
                   </div>
@@ -743,7 +802,7 @@ export default function Page() {
               </div>
             ))}
           </div>
-          {filteredHistory.length > historyLimit && (
+          {displayedHistory.length > historyLimit && (
             <div className="flex justify-center mt-4">
               <button
                 className="px-6 py-2 bg-purple-100 text-purple-700 rounded-full font-semibold shadow hover:bg-purple-200 transition"
