@@ -16,13 +16,15 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const data = await req.json();
-  const { id, url, source, medium, campaign, timestamp, term, content } = data;
+  const { id, url, source, medium, campaign, timestamp, term, content, bitly_url } = data;
   if (!url || !timestamp) {
     return NextResponse.json({ error: 'Missing url or timestamp' }, { status: 400 });
   }
   const { error } = await supabase
     .from('utm_history')
-    .insert([{ id, url, source, medium, campaign, timestamp, term, content }]);
+    .upsert([
+      { id, url, source, medium, campaign, timestamp, term, content, bitly_url }
+    ], { onConflict: 'id' });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true, id });
 }
