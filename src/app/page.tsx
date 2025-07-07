@@ -10,6 +10,8 @@ type HistoryEntry = {
   medium?: string;
   campaign?: string;
   timestamp: string;
+  term?: string;
+  content?: string;
 };
 
 const sources = [
@@ -49,6 +51,11 @@ export default function Page() {
   const [showCustomMediumInput, setShowCustomMediumInput] = useState(false);
   const [newCustomSource, setNewCustomSource] = useState('');
   const [newCustomMedium, setNewCustomMedium] = useState('');
+
+  // Advanced UTM fields
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [term, setTerm] = useState('');
+  const [content, setContent] = useState('');
 
   // Replace localStorage history logic with API calls
   useEffect(() => {
@@ -91,6 +98,16 @@ export default function Page() {
         } else {
           url.searchParams.delete('utm_campaign');
         }
+        if (term) {
+          url.searchParams.set('utm_term', term);
+        } else {
+          url.searchParams.delete('utm_term');
+        }
+        if (content) {
+          url.searchParams.set('utm_content', content);
+        } else {
+          url.searchParams.delete('utm_content');
+        }
         setGeneratedURL(url.toString());
       } catch {
         setGeneratedURL('');
@@ -98,7 +115,7 @@ export default function Page() {
     } else {
       setGeneratedURL('');
     }
-  }, [baseURL, source, medium, campaign]);
+  }, [baseURL, source, medium, campaign, term, content]);
 
   const saveToHistory = async () => {
     if (!generatedURL) return;
@@ -108,6 +125,8 @@ export default function Page() {
       source,
       medium,
       campaign,
+      term,
+      content,
       timestamp: new Date().toISOString()
     };
     const res = await fetch('/api/history', {
@@ -358,6 +377,40 @@ export default function Page() {
               value={campaign}
               onChange={e => setCampaign(e.target.value)}
             />
+
+            {/* In the form UI, add a + button to show advanced fields */}
+            <div className="flex justify-end mt-2">
+              {!showAdvanced && (
+                <button
+                  className="text-blue-500 text-sm font-semibold flex items-center gap-1 hover:underline"
+                  onClick={() => setShowAdvanced(true)}
+                  type="button"
+                >
+                  <span className="text-lg font-bold">+</span> Add advanced UTM fields
+                </button>
+              )}
+            </div>
+            {showAdvanced && (
+              <div className="space-y-2 mt-2">
+                <input
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-900 text-base"
+                  placeholder="Term (utm_term, optional)"
+                  value={term}
+                  onChange={e => setTerm(e.target.value)}
+                />
+                <input
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-900 text-base"
+                  placeholder="Content (utm_content, optional)"
+                  value={content}
+                  onChange={e => setContent(e.target.value)}
+                />
+                <button
+                  className="text-blue-500 text-xs font-semibold hover:underline mt-1"
+                  onClick={() => setShowAdvanced(false)}
+                  type="button"
+                >Hide advanced fields</button>
+              </div>
+            )}
           </div>
 
           {/* Always visible output box */}
@@ -471,6 +524,12 @@ export default function Page() {
                       )}
                       {entry.campaign && (
                         <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-0.5 rounded-full">Campaign: {entry.campaign}</span>
+                      )}
+                      {entry.term && (
+                        <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-0.5 rounded-full">Term: {entry.term}</span>
+                      )}
+                      {entry.content && (
+                        <span className="bg-pink-100 text-pink-800 text-xs font-semibold px-2 py-0.5 rounded-full">Content: {entry.content}</span>
                       )}
                     </div>
                   </div>
