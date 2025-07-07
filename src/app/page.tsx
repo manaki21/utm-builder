@@ -126,7 +126,7 @@ export default function Page() {
     if (!baseURL) setStep(1);
     else if (!source) setStep(2);
     else if (!medium) setStep(3);
-    else setStep(4);
+    else setStep(4); // 4 = highlight buttons
   }, [baseURL, source, medium]);
 
   const saveToHistory = async () => {
@@ -386,11 +386,6 @@ export default function Page() {
           <div className={`rounded-full w-7 h-7 flex items-center justify-center border-2 ${step === 3 ? 'border-purple-500 bg-white focus-pulse' : 'border-gray-300 bg-gray-100'}`}>3</div>
           <span className="text-xs mt-1">Medium</span>
         </div>
-        <div className="h-7 w-8 border-t-2 border-gray-200 mt-3"></div>
-        <div className={`flex flex-col items-center ${step === 4 ? 'text-purple-700 font-bold' : 'text-gray-400'}`}>
-          <div className={`rounded-full w-7 h-7 flex items-center justify-center border-2 ${step === 4 ? 'border-purple-500 bg-white focus-pulse' : 'border-gray-300 bg-gray-100'}`}>4</div>
-          <span className="text-xs mt-1">Campaign</span>
-        </div>
       </div>
       <div className="flex flex-col lg:flex-row gap-8 w-full max-w-6xl">
         <div className="w-full lg:w-1/2 bg-white rounded-2xl shadow-2xl p-8 border border-gray-100 lg:max-h-[90vh] lg:overflow-auto">
@@ -535,7 +530,7 @@ export default function Page() {
           {/* Minimalistic buttons below the box */}
           <div className="flex gap-3 justify-center mt-3">
             <button
-              className="flex items-center gap-2 border border-blue-500 text-blue-700 px-4 py-1.5 rounded-full font-medium shadow-sm transition text-base hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`flex items-center gap-2 border border-blue-500 text-blue-700 px-4 py-1.5 rounded-full font-medium shadow-sm transition text-base hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed ${step === 4 ? 'focus-pulse border-purple-500' : ''}`}
               onClick={handleCopy}
               disabled={!generatedURL}
             >
@@ -543,7 +538,7 @@ export default function Page() {
               {copied ? 'Copied!' : 'Copy'}
             </button>
             <button
-              className="flex items-center gap-2 border border-green-500 text-green-700 px-4 py-1.5 rounded-full font-medium shadow-sm transition text-base hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`flex items-center gap-2 border border-green-500 text-green-700 px-4 py-1.5 rounded-full font-medium shadow-sm transition text-base hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-300 disabled:opacity-50 disabled:cursor-not-allowed ${step === 4 ? 'focus-pulse border-purple-500' : ''}`}
               onClick={saveToHistory}
               disabled={!generatedURL}
             >
