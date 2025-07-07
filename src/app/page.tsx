@@ -33,17 +33,6 @@ export default function Page() {
   const [campaign, setCampaign] = useState('');
   const [generatedURL, setGeneratedURL] = useState('');
   const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [filter, setFilter] = useState('');
-  const [copied, setCopied] = useState(false);
-  const [filterCategory] = useState<'all' | 'source' | 'medium' | 'campaign' | 'url'>('all');
-  const [search, setSearch] = useState('');
-  const [copiedHistoryId, setCopiedHistoryId] = useState<string | null>(null);
-  // Date filter/sort state
-  const [dateSort, setDateSort] = useState<'latest' | 'oldest'>('latest');
-  const [monthFilter, setMonthFilter] = useState('');
-  // Sort/filter by field
-  const [sortField, setSortField] = useState<'all' | 'source' | 'medium' | 'campaign' | 'url'>('all');
-  const [fieldFilter, setFieldFilter] = useState('');
   const [historyLimit, setHistoryLimit] = useState(10);
 
   // Custom sources/mediums (persisted)
@@ -265,7 +254,7 @@ export default function Page() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Filtering and sorting logic
-  let filteredHistory = history.filter(h => {
+  const filteredHistory = history.filter(h => {
     const q = searchQuery.toLowerCase();
     return (
       (h.url && h.url.toLowerCase().includes(q)) ||
@@ -278,11 +267,41 @@ export default function Page() {
     );
   });
   filteredHistory.sort((a, b) => {
-    let aVal = a[sortColumn] || '';
-    let bVal = b[sortColumn] || '';
-    if (sortColumn === 'timestamp') {
-      aVal = new Date(a.timestamp).getTime();
-      bVal = new Date(b.timestamp).getTime();
+    let aVal: string | number = '';
+    let bVal: string | number = '';
+    switch (sortColumn) {
+      case 'url':
+        aVal = a.url || '';
+        bVal = b.url || '';
+        break;
+      case 'bitly_url':
+        aVal = a.bitly_url || '';
+        bVal = b.bitly_url || '';
+        break;
+      case 'source':
+        aVal = a.source || '';
+        bVal = b.source || '';
+        break;
+      case 'medium':
+        aVal = a.medium || '';
+        bVal = b.medium || '';
+        break;
+      case 'campaign':
+        aVal = a.campaign || '';
+        bVal = b.campaign || '';
+        break;
+      case 'term':
+        aVal = a.term || '';
+        bVal = b.term || '';
+        break;
+      case 'content':
+        aVal = a.content || '';
+        bVal = b.content || '';
+        break;
+      case 'timestamp':
+      default:
+        aVal = new Date(a.timestamp).getTime();
+        bVal = new Date(b.timestamp).getTime();
     }
     if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
     if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
@@ -338,7 +357,7 @@ export default function Page() {
   // When filters/search change, reset historyLimit
   useEffect(() => {
     setHistoryLimit(10);
-  }, [filter, search, monthFilter, fieldFilter, sortField]);
+  }, [searchQuery, monthOptions, sourceOptions, mediumOptions, campaignOptions, urlOptions, sortColumn, sortDirection]);
 
   // Get latest entry's month and year
   const latestEntry = history.length > 0 ? history.slice().sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0] : null;
@@ -454,19 +473,8 @@ export default function Page() {
     displayedHistory = filteredHistory.filter(h => h.bitly_url);
   }
 
-  // Helper to smartly truncate a URL (show start and end, hide middle)
-  function smartTruncateUrl(url: string, maxLength = 56) {
-    if (url.length <= maxLength) return url;
-    const start = url.slice(0, 28);
-    const end = url.slice(-22);
-    return `${start}…${end}`;
-  }
-
-  // Add custom scrollbar styles (Tailwind or inline)
-  const customScrollbar = {
-    scrollbarWidth: 'thin',
-    scrollbarColor: '#a5b4fc #f3f4f6', // blue-200 on gray-100
-  };
+  const [copied, setCopied] = useState(false);
+  const [copiedHistoryId, setCopiedHistoryId] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100 flex flex-row items-start justify-center py-8 px-2 gap-8 relative mt-24">
