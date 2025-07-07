@@ -776,17 +776,30 @@ export default function Page() {
                 className={`group bg-white border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition mb-3 flex flex-col gap-2 relative ${entry.id === newlyAddedId ? 'bg-green-50 border-green-400 animate-fade-highlight' : ''}`}
                 style={{ minHeight: 80 }}
               >
-                {/* Top row: UTM, Bitly, tags */}
-                <div className="flex flex-wrap gap-2 items-center mb-1">
-                  {/* UTM Link chip */}
+                {/* Top row: Link, copy chip, Bitly chip */}
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  {/* Blue link icon + link (truncated) */}
+                  <span className="flex items-center gap-1 max-w-xs truncate">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="#2563eb"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 010 5.656m-3.656-3.656a4 4 0 015.656 0m-7.778 7.778a4 4 0 005.656 0l4.242-4.242a4 4 0 00-5.656-5.656l-1.414 1.414" /></svg>
+                    <a
+                      href={entry.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-700 font-semibold hover:underline max-w-[180px] truncate"
+                      style={{ fontSize: '0.98rem', verticalAlign: 'middle', display: 'inline-block' }}
+                    >
+                      {entry.url ? (entry.url.length > 48 ? entry.url.slice(0, 48) + '…' : entry.url) : '(empty)'}
+                    </a>
+                  </span>
+                  {/* Copy chip */}
                   <button
-                    className="inline-flex items-center gap-1 bg-blue-50 border border-blue-400 px-3 py-1 rounded-full min-w-0 flex-nowrap hover:bg-blue-100 transition relative max-w-xs truncate shadow-sm"
+                    className="inline-flex items-center gap-1 bg-blue-50 border border-blue-400 px-2 py-0.5 rounded-full min-w-0 flex-nowrap hover:bg-blue-100 transition relative shadow-sm text-blue-700 font-semibold text-xs"
                     title="Copy UTM link"
                     onClick={() => handleCopyHistory(entry.url, entry.id)}
                     style={{ lineHeight: 1 }}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" strokeWidth="2" fill="none"/><rect x="3" y="3" width="13" height="13" rx="2" ry="2" stroke="currentColor" strokeWidth="2" fill="none"/></svg>
-                    <span style={{ color: '#2563eb', fontWeight: 600, fontSize: '0.92rem', lineHeight: '1.2', maxWidth: 140, display: 'inline-block', verticalAlign: 'middle', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.url ? (entry.url.length > 36 ? entry.url.slice(0, 36) + '…' : entry.url) : '(empty)'}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="#2563eb"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="#2563eb" strokeWidth="2" fill="none"/><rect x="3" y="3" width="13" height="13" rx="2" ry="2" stroke="#2563eb" strokeWidth="2" fill="none"/></svg>
+                    Copy
                     {copiedHistoryId === entry.id && (
                       <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs rounded px-2 py-0.5 shadow">Copied!</span>
                     )}
@@ -794,19 +807,21 @@ export default function Page() {
                   {/* Bitly chip */}
                   {entry.bitly_url && (
                     <button
-                      className="inline-flex items-center gap-1 bg-orange-50 border border-[#ee6123] px-3 py-1 rounded-full min-w-0 flex-nowrap hover:bg-orange-100 transition relative shadow-sm"
+                      className="inline-flex items-center gap-1 bg-orange-50 border border-[#ee6123] px-2 py-0.5 rounded-full min-w-0 flex-nowrap hover:bg-orange-100 transition relative shadow-sm text-[#ee6123] font-semibold text-xs"
                       title="Copy shortlink"
                       onClick={() => handleCopyHistory(entry.bitly_url!, entry.id + '-bitly')}
                       style={{ lineHeight: 1 }}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-4 w-4 flex-shrink-0" fill="#ee6123"><path d="M23.6 8.4c-2.1-2.1-5.5-2.1-7.6 0l-6.2 6.2c-2.1 2.1-2.1 5.5 0 7.6 2.1 2.1 5.5 2.1 7.6 0l1.2-1.2c.4-.4.4-1 0-1.4s-1-.4-1.4 0l-1.2 1.2c-1.3 1.3-3.3 1.3-4.6 0-1.3-1.3-1.3-3.3 0-4.6l6.2-6.2c1.3-1.3 3.3-1.3 4.6 0 1.3 1.3 1.3 3.3 0 4.6l-.7.7c-.4.4-.4 1 0 1.4.4.4 1 .4 1.4 0l.7-.7c2.1-2.1 2.1-5.5 0-7.6z"/></svg>
-                      <span style={{ color: '#ee6123', fontWeight: 600, fontSize: '0.92rem', lineHeight: '1.2', display: 'inline-block', verticalAlign: 'middle' }}>Bitly</span>
+                      Bitly
                       {copiedHistoryId === entry.id + '-bitly' && (
                         <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#ee6123] text-white text-xs rounded px-2 py-0.5 shadow">Copied!</span>
                       )}
                     </button>
                   )}
-                  {/* Tags row */}
+                </div>
+                {/* Second row: tags */}
+                <div className="flex flex-wrap gap-1 items-center mt-1 mb-1">
                   {entry.source && (
                     <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-full">Source: {entry.source}</span>
                   )}
@@ -823,8 +838,8 @@ export default function Page() {
                     <span className="bg-pink-100 text-pink-800 text-xs font-semibold px-2 py-0.5 rounded-full">Content: {entry.content}</span>
                   )}
                 </div>
-                {/* Bottom row: timestamp and delete */}
-                <div className="flex items-center justify-between mt-2">
+                {/* Third row: date/time and delete */}
+                <div className="flex items-center justify-between mt-1">
                   <span className="text-xs text-gray-400 font-medium">{new Date(entry.timestamp).toLocaleString()}</span>
                   <button
                     className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-red-500 text-xs font-bold px-3 py-1 rounded-full hover:bg-red-50 shadow-sm"
