@@ -480,12 +480,7 @@ export default function Page() {
             </div>
 
             {/* Add animation and focus pulse to form fields */}
-            <input
-              className={`w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-900 text-base animate-slide-in-up ${step === 4 ? 'focus-pulse border-purple-500' : ''}`}
-              placeholder="Campaign (optional)"
-              value={campaign}
-              onChange={e => setCampaign(e.target.value)}
-            />
+            {/* Remove Campaign from main form and step logic */}
 
             {/* In the form UI, add a + button to show advanced fields */}
             <div className="flex justify-end mt-2">
@@ -501,6 +496,12 @@ export default function Page() {
             </div>
             {showAdvanced && (
               <div className="space-y-2 mt-2">
+                <input
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-900 text-base"
+                  placeholder="Campaign (utm_campaign, optional)"
+                  value={campaign}
+                  onChange={e => setCampaign(e.target.value)}
+                />
                 <input
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-900 text-base"
                   placeholder="Term (utm_term, optional)"
