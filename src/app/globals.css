@@ -61,6 +61,14 @@ body {
 .focus-pulse {
   animation: focus-pulse 1.2s infinite;
 }
+@keyframes fade-highlight {
+  0% { background-color: #d1fae5; border-color: #34d399; }
+  80% { background-color: #d1fae5; border-color: #34d399; }
+  100% { background-color: white; border-color: #e5e7eb; }
+}
+.animate-fade-highlight {
+  animation: fade-highlight 2s cubic-bezier(0.4,0,0.2,1);
+}
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in, .animate-slide-in-up, .focus-pulse, .animate-pulse-slow {
     animation: none !important;

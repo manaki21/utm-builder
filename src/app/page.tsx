@@ -129,6 +129,15 @@ export default function Page() {
     else setStep(4); // 4 = highlight buttons
   }, [baseURL, source, medium]);
 
+  // Add state for newly added history highlight
+  const [newlyAddedId, setNewlyAddedId] = useState<string | null>(null);
+  useEffect(() => {
+    if (newlyAddedId) {
+      const timeout = setTimeout(() => setNewlyAddedId(null), 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, [newlyAddedId]);
+
   const saveToHistory = async () => {
     if (!generatedURL) return;
     const newEntry = {
@@ -148,6 +157,8 @@ export default function Page() {
     });
     if (res.ok) {
       setHistory(prev => [newEntry, ...prev]);
+      setStep(0); // End step-by-step
+      setNewlyAddedId(newEntry.id); // Highlight new entry
     }
   };
 
@@ -250,6 +261,7 @@ export default function Page() {
       navigator.clipboard.writeText(generatedURL);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
+      setStep(0); // End step-by-step
     }
   };
 
@@ -396,7 +408,7 @@ export default function Page() {
           <div className="space-y-4">
             {/* Add animation and focus pulse to form fields */}
             <input
-              className={`w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-900 text-base animate-slide-in-up ${step === 1 ? 'focus-pulse border-purple-500' : ''}`}
+              className={`w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-900 text-base ${step === 1 ? 'focus-pulse border-purple-500' : ''}`}
               placeholder="Base URL (e.g. https://example.com)"
               value={baseURL}
               onChange={e => setBaseURL(e.target.value)}
@@ -405,7 +417,7 @@ export default function Page() {
             <div className="flex gap-4">
               <div className="w-1/2">
                 <select
-                  className={`w-full p-3 border border-gray-300 rounded-lg text-gray-900 text-base animate-slide-in-up ${step === 2 ? 'focus-pulse border-purple-500' : ''}`}
+                  className={`w-full p-3 border border-gray-300 rounded-lg text-gray-900 text-base ${step === 2 ? 'focus-pulse border-purple-500' : ''}`}
                   value={showCustomSourceInput ? 'custom' : source}
                   onChange={e => {
                     if (e.target.value === 'custom') {
@@ -442,7 +454,7 @@ export default function Page() {
               </div>
               <div className="w-1/2">
                 <select
-                  className={`w-full p-3 border border-gray-300 rounded-lg text-gray-900 text-base animate-slide-in-up ${step === 3 ? 'focus-pulse border-purple-500' : ''}`}
+                  className={`w-full p-3 border border-gray-300 rounded-lg text-gray-900 text-base ${step === 3 ? 'focus-pulse border-purple-500' : ''}`}
                   value={showCustomMediumInput ? 'custom' : medium}
                   onChange={e => {
                     if (e.target.value === 'custom') {
@@ -632,7 +644,10 @@ export default function Page() {
               <div className="text-center text-gray-400 py-8 bg-white rounded-lg shadow-inner text-base">No history found.</div>
             )}
             {filteredHistory.slice(0, historyLimit).map(entry => (
-              <div key={entry.id} className="bg-white border border-gray-200 p-4 rounded-xl shadow hover:shadow-lg transition mb-2 flex flex-col gap-2">
+              <div
+                key={entry.id}
+                className={`bg-white border border-gray-200 p-4 rounded-xl shadow hover:shadow-lg transition mb-2 flex flex-col gap-2 ${entry.id === newlyAddedId ? 'bg-green-50 border-green-400 animate-fade-highlight' : ''}`}
+              >
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div className="overflow-hidden min-w-0">
                     <p className="truncate text-base text-gray-900 font-semibold max-w-xs">{entry.url}</p>
