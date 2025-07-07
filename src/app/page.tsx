@@ -50,9 +50,16 @@ export default function Page() {
   const [newCustomSource, setNewCustomSource] = useState('');
   const [newCustomMedium, setNewCustomMedium] = useState('');
 
+  // Replace localStorage history logic with API calls
   useEffect(() => {
-    const stored = typeof window !== 'undefined' ? localStorage.getItem('utmHistory') : null;
-    if (stored) setHistory(JSON.parse(stored));
+    async function fetchHistory() {
+      const res = await fetch('/api/history');
+      if (res.ok) {
+        const data = await res.json();
+        setHistory(data);
+      }
+    }
+    fetchHistory();
   }, []);
 
   // Load custom sources/mediums from localStorage
@@ -93,7 +100,7 @@ export default function Page() {
     }
   }, [baseURL, source, medium, campaign]);
 
-  const saveToHistory = () => {
+  const saveToHistory = async () => {
     if (!generatedURL) return;
     const newEntry = {
       id: uuidv4(),
@@ -103,18 +110,24 @@ export default function Page() {
       campaign,
       timestamp: new Date().toISOString()
     };
-    const updated = [newEntry, ...history];
-    setHistory(updated);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('utmHistory', JSON.stringify(updated));
+    const res = await fetch('/api/history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newEntry)
+    });
+    if (res.ok) {
+      setHistory(prev => [newEntry, ...prev]);
     }
   };
 
-  const deleteFromHistory = (id: string) => {
-    const updated = history.filter(h => h.id !== id);
-    setHistory(updated);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('utmHistory', JSON.stringify(updated));
+  const deleteFromHistory = async (id: string) => {
+    const res = await fetch('/api/history', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    if (res.ok) {
+      setHistory(prev => prev.filter(h => h.id !== id));
     }
   };
 
