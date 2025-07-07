@@ -339,7 +339,8 @@ export default function Page() {
 
   const [bitlyLoading, setBitlyLoading] = useState(false);
   const [bitlyResult, setBitlyResult] = useState<{ url: string; duplicate: boolean } | null>(null);
-  const [historyTab, setHistoryTab] = useState<'all' | 'shortlinks'>('all');
+  // Tabs: All, UTM Links, Shortlinks
+  const [historyTab, setHistoryTab] = useState<'all' | 'utm' | 'shortlinks'>('all');
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [shortlinks, setShortlinks] = useState<{ utm_url: string; bitly_url: string; created_at: string }[]>([]);
 
@@ -402,7 +403,12 @@ export default function Page() {
   };
 
   // Filter history for the selected tab
-  const displayedHistory = historyTab === 'shortlinks' ? filteredHistory.filter(h => h.bitly_url) : filteredHistory;
+  let displayedHistory = filteredHistory;
+  if (historyTab === 'utm') {
+    displayedHistory = filteredHistory.filter(h => !h.bitly_url);
+  } else if (historyTab === 'shortlinks') {
+    displayedHistory = filteredHistory.filter(h => h.bitly_url);
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100 flex flex-col items-center justify-center py-8 px-2">
@@ -667,11 +673,17 @@ export default function Page() {
               All
             </button>
             <button
+              className={`px-4 py-2 rounded-t-lg font-semibold text-base border-b-2 transition flex items-center gap-2 ${historyTab === 'utm' ? 'border-blue-500 text-blue-700 bg-white' : 'border-transparent text-gray-400 bg-gray-50 hover:text-blue-500'}`}
+              onClick={() => setHistoryTab('utm')}
+            >
+              UTM Links
+            </button>
+            <button
               className={`px-4 py-2 rounded-t-lg font-semibold text-base border-b-2 transition flex items-center gap-2 ${historyTab === 'shortlinks' ? 'border-[#ee6123] text-[#ee6123] bg-white' : 'border-transparent text-gray-400 bg-gray-50 hover:text-[#ee6123]'}`}
               onClick={() => setHistoryTab('shortlinks')}
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-5 w-5" fill="#ee6123"><path d="M23.6 8.4c-2.1-2.1-5.5-2.1-7.6 0l-6.2 6.2c-2.1 2.1-2.1 5.5 0 7.6 2.1 2.1 5.5 2.1 7.6 0l1.2-1.2c.4-.4.4-1 0-1.4s-1-.4-1.4 0l-1.2 1.2c-1.3 1.3-3.3 1.3-4.6 0-1.3-1.3-1.3-3.3 0-4.6l6.2-6.2c1.3-1.3 3.3-1.3 4.6 0 1.3 1.3 1.3 3.3 0 4.6l-.7.7c-.4.4-.4 1 0 1.4.4.4 1 .4 1.4 0l.7-.7c2.1-2.1 2.1-5.5 0-7.6z"/></svg>
-              Shortlinks Only
+              Shortlinks
             </button>
           </div>
           <div className="flex flex-wrap gap-2 items-center bg-purple-50 border border-purple-100 rounded-xl px-4 py-3 mb-4">
@@ -741,7 +753,7 @@ export default function Page() {
             onChange={e => setSearch(e.target.value)}
           />
           <div className="space-y-3">
-            {filteredHistory.length === 0 && (
+            {displayedHistory.length === 0 && (
               <div className="text-center text-gray-400 py-8 bg-white rounded-lg shadow-inner text-base">No history found.</div>
             )}
             {/* Filter history for the selected tab */}
@@ -751,9 +763,42 @@ export default function Page() {
                 className={`bg-white border border-gray-200 p-4 rounded-xl shadow hover:shadow-lg transition mb-2 flex flex-col gap-2 ${entry.id === newlyAddedId ? 'bg-green-50 border-green-400 animate-fade-highlight' : ''}`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div className="overflow-hidden min-w-0">
-                    <p className="truncate text-base text-gray-900 font-semibold max-w-xs">{entry.url}</p>
-                    <div className="flex flex-wrap gap-2 mt-1">
+                  <div className="overflow-hidden min-w-0 w-full">
+                    {/* UTM Link row */}
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="truncate text-base text-gray-900 font-semibold max-w-xs" title={entry.url}>{entry.url}</p>
+                      <button
+                        className="text-blue-500 hover:bg-blue-50 p-1.5 rounded-full transition relative"
+                        title="Copy UTM link"
+                        onClick={() => handleCopyHistory(entry.url, entry.id)}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" strokeWidth="2" fill="none"/><rect x="3" y="3" width="13" height="13" rx="2" ry="2" stroke="currentColor" strokeWidth="2" fill="none"/></svg>
+                        {copiedHistoryId === entry.id && (
+                          <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs rounded px-2 py-0.5 shadow">Copied!</span>
+                        )}
+                      </button>
+                    </div>
+                    {/* Bitly shortlink row */}
+                    {entry.bitly_url && (
+                      <div className="flex items-center gap-2 mb-1">
+                        <a href={entry.bitly_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[#ee6123] font-bold text-xs hover:underline" title={entry.bitly_url}>
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-4 w-4" fill="#ee6123"><path d="M23.6 8.4c-2.1-2.1-5.5-2.1-7.6 0l-6.2 6.2c-2.1 2.1-2.1 5.5 0 7.6 2.1 2.1 5.5 2.1 7.6 0l1.2-1.2c.4-.4.4-1 0-1.4s-1-.4-1.4 0l-1.2 1.2c-1.3 1.3-3.3 1.3-4.6 0-1.3-1.3-1.3-3.3 0-4.6l6.2-6.2c1.3-1.3 3.3-1.3 4.6 0 1.3 1.3 1.3 3.3 0 4.6l-.7.7c-.4.4-.4 1 0 1.4.4.4 1 .4 1.4 0l.7-.7c2.1-2.1 2.1-5.5 0-7.6z"/></svg>
+                          Bitly
+                        </a>
+                        <button
+                          className="text-[#ee6123] hover:bg-orange-50 p-1.5 rounded-full transition relative"
+                          title="Copy shortlink"
+                          onClick={() => handleCopyHistory(entry.bitly_url!, entry.id + '-bitly')}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="#ee6123"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="#ee6123" strokeWidth="2" fill="none"/><rect x="3" y="3" width="13" height="13" rx="2" ry="2" stroke="#ee6123" strokeWidth="2" fill="none"/></svg>
+                          {copiedHistoryId === entry.id + '-bitly' && (
+                            <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#ee6123] text-white text-xs rounded px-2 py-0.5 shadow">Copied!</span>
+                          )}
+                        </button>
+                      </div>
+                    )}
+                    {/* Chips/tags row */}
+                    <div className="flex flex-wrap gap-1 mt-1">
                       {entry.source && (
                         <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-full">Source: {entry.source}</span>
                       )}
@@ -769,27 +814,11 @@ export default function Page() {
                       {entry.content && (
                         <span className="bg-pink-100 text-pink-800 text-xs font-semibold px-2 py-0.5 rounded-full">Content: {entry.content}</span>
                       )}
-                      {entry.bitly_url && (
-                        <a href={entry.bitly_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[#ee6123] font-bold text-xs hover:underline">
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-4 w-4" fill="#ee6123"><path d="M23.6 8.4c-2.1-2.1-5.5-2.1-7.6 0l-6.2 6.2c-2.1 2.1-2.1 5.5 0 7.6 2.1 2.1 5.5 2.1 7.6 0l1.2-1.2c.4-.4.4-1 0-1.4s-1-.4-1.4 0l-1.2 1.2c-1.3 1.3-3.3 1.3-4.6 0-1.3-1.3-1.3-3.3 0-4.6l6.2-6.2c1.3-1.3 3.3-1.3 4.6 0 1.3 1.3 1.3 3.3 0 4.6l-.7.7c-.4.4-.4 1 0 1.4.4.4 1 .4 1.4 0l.7-.7c2.1-2.1 2.1-5.5 0-7.6z"/></svg>
-                          Bitly
-                        </a>
-                      )}
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1 min-w-fit">
                     <p className="text-xs text-gray-500 whitespace-nowrap">{new Date(entry.timestamp).toLocaleString()}</p>
                     <div className="flex gap-2">
-                      <button
-                        className="text-blue-500 hover:bg-blue-50 p-1.5 rounded-full transition relative"
-                        title="Copy link"
-                        onClick={() => handleCopyHistory(entry.url, entry.id)}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" strokeWidth="2" fill="none"/><rect x="3" y="3" width="13" height="13" rx="2" ry="2" stroke="currentColor" strokeWidth="2" fill="none"/></svg>
-                        {copiedHistoryId === entry.id && (
-                          <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs rounded px-2 py-0.5 shadow">Copied!</span>
-                        )}
-                      </button>
                       <button
                         className="text-red-500 text-sm font-bold px-3 py-1.5 rounded-full hover:bg-red-50 transition shadow"
                         onClick={() => deleteFromHistory(entry.id)}
