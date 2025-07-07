@@ -74,6 +74,80 @@ export default function Page() {
     fetchHistory();
   }, []);
 
+  // Populate mock data if running locally and Supabase env vars are missing
+  useEffect(() => {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      setHistory([
+        {
+          id: '1',
+          url: 'https://example.com/?utm_source=google&utm_medium=cpc&utm_campaign=spring&utm_term=shoes&utm_content=ad1',
+          source: 'google',
+          medium: 'cpc',
+          campaign: 'spring',
+          term: 'shoes',
+          content: 'ad1',
+          bitly_url: 'https://bit.ly/abc123',
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString()
+        },
+        {
+          id: '2',
+          url: 'https://example.com/?utm_source=twitter&utm_medium=social&utm_campaign=launch&utm_term=promo&utm_content=organic',
+          source: 'twitter',
+          medium: 'social',
+          campaign: 'launch',
+          term: 'promo',
+          content: 'organic',
+          bitly_url: 'https://bit.ly/xyz789',
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString()
+        },
+        {
+          id: '3',
+          url: 'https://example.com/?utm_source=linkedin&utm_medium=email&utm_campaign=b2b&utm_term=lead&utm_content=drip',
+          source: 'linkedin',
+          medium: 'email',
+          campaign: 'b2b',
+          term: 'lead',
+          content: 'drip',
+          bitly_url: '',
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString()
+        },
+        {
+          id: '4',
+          url: 'https://example.com/?utm_source=instagram&utm_medium=paid_social&utm_campaign=summer&utm_term=swim&utm_content=carousel',
+          source: 'instagram',
+          medium: 'paid_social',
+          campaign: 'summer',
+          term: 'swim',
+          content: 'carousel',
+          bitly_url: 'https://bit.ly/insta456',
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4).toISOString()
+        },
+        {
+          id: '5',
+          url: 'https://example.com/?utm_source=newsletter&utm_medium=email&utm_campaign=weekly&utm_term=update&utm_content=footer',
+          source: 'newsletter',
+          medium: 'email',
+          campaign: 'weekly',
+          term: 'update',
+          content: 'footer',
+          bitly_url: '',
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString()
+        },
+        {
+          id: '6',
+          url: 'https://example.com/?utm_source=affiliate&utm_medium=referral&utm_campaign=partner&utm_term=bonus&utm_content=sidebar',
+          source: 'affiliate',
+          medium: 'referral',
+          campaign: 'partner',
+          term: 'bonus',
+          content: 'sidebar',
+          bitly_url: 'https://bit.ly/aff321',
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString()
+        }
+      ]);
+    }
+  }, []);
+
   // Load custom sources/mediums from localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -185,66 +259,35 @@ export default function Page() {
     }
   }
 
-  let filteredHistory = [...history];
-  // Filter by month
-  if (monthFilter) {
-    filteredHistory = filteredHistory.filter(h => {
-      const d = new Date(h.timestamp);
-      const m = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-      return m === monthFilter;
-    });
-  }
-  // Filter by field
-  if (sortField !== 'all' && fieldFilter) {
-    filteredHistory = filteredHistory.filter(h => {
-      if (sortField === 'url') return getBaseUrl(h.url) === fieldFilter;
-      return h[sortField] === fieldFilter;
-    });
-  }
-  // Filter by campaign/url (legacy filter bar)
-  if (filter) {
-    filteredHistory = filteredHistory.filter(h => {
-      if (filterCategory === 'campaign') {
-        return h.campaign && h.campaign.toLowerCase().includes(filter.toLowerCase());
-      } else if (filterCategory === 'url') {
-        return getBaseUrl(h.url).toLowerCase().includes(filter.toLowerCase());
-      }
-      return false;
-    });
-  }
-  // Search
-  if (search) {
-    filteredHistory = filteredHistory.filter(h =>
-      (h.url && h.url.toLowerCase().includes(search.toLowerCase())) ||
-      (h.source && h.source.toLowerCase().includes(search.toLowerCase())) ||
-      (h.medium && h.medium.toLowerCase().includes(search.toLowerCase())) ||
-      (h.campaign && h.campaign.toLowerCase().includes(search.toLowerCase()))
+  // Add state for search and sorting
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortColumn, setSortColumn] = useState('timestamp');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  // Filtering and sorting logic
+  let filteredHistory = history.filter(h => {
+    const q = searchQuery.toLowerCase();
+    return (
+      (h.url && h.url.toLowerCase().includes(q)) ||
+      (h.source && h.source.toLowerCase().includes(q)) ||
+      (h.medium && h.medium.toLowerCase().includes(q)) ||
+      (h.campaign && h.campaign.toLowerCase().includes(q)) ||
+      (h.term && h.term.toLowerCase().includes(q)) ||
+      (h.content && h.content.toLowerCase().includes(q)) ||
+      (h.bitly_url && h.bitly_url.toLowerCase().includes(q))
     );
-  }
-  // Sort by date
-  filteredHistory.sort((a, b) => {
-    if (dateSort === 'latest') {
-      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-    } else {
-      return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
-    }
   });
-  // Sort by field (always ascending)
-  if (sortField !== 'all') {
-    filteredHistory.sort((a, b) => {
-      let aVal = '', bVal = '';
-      if (sortField === 'url') {
-        aVal = getBaseUrl(a.url);
-        bVal = getBaseUrl(b.url);
-      } else if (sortField === 'source' || sortField === 'medium' || sortField === 'campaign') {
-        aVal = a[sortField] || '';
-        bVal = b[sortField] || '';
-      }
-      if (aVal < bVal) return -1;
-      if (aVal > bVal) return 1;
-      return 0;
-    });
-  }
+  filteredHistory.sort((a, b) => {
+    let aVal = a[sortColumn] || '';
+    let bVal = b[sortColumn] || '';
+    if (sortColumn === 'timestamp') {
+      aVal = new Date(a.timestamp).getTime();
+      bVal = new Date(b.timestamp).getTime();
+    }
+    if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
 
   // Get unique months for month filter
   const monthOptions = Array.from(new Set(history.map(h => {
@@ -419,41 +462,45 @@ export default function Page() {
     return `${start}…${end}`;
   }
 
+  // Add custom scrollbar styles (Tailwind or inline)
+  const customScrollbar = {
+    scrollbarWidth: 'thin',
+    scrollbarColor: '#a5b4fc #f3f4f6', // blue-200 on gray-100
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100 flex flex-col items-center justify-center py-8 px-2">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100 flex flex-row items-start justify-center py-8 px-2 gap-8 relative mt-24">
+      {/* Add a top header bar */}
+      <div className="w-full flex items-center justify-between px-8 py-3 bg-white/80 border-b border-gray-200 shadow-sm fixed top-0 left-0 z-40 backdrop-blur">
+        <div className="flex items-center gap-3">
+          <Image src="/logo.png" alt="Logo" width={40} height={40} className="object-contain" />
+          <span className="text-xl font-bold text-blue-700 tracking-tight">UTM Builder</span>
+        </div>
+        <div className="text-xs text-gray-500 font-semibold tracking-wide select-none">{latestLabel}</div>
+      </div>
+      {/* Full-width tutorial banner overlay */}
       {showTutorial && (
-        <div className="w-full max-w-3xl mx-auto mb-6 bg-gradient-to-r from-blue-100 via-purple-50 to-pink-100 border border-purple-200 rounded-xl shadow-lg p-5 flex flex-col gap-3 relative animate-fade-in">
-          <button
-            className="absolute top-2 right-2 text-gray-400 hover:text-purple-600 text-xl font-bold focus:outline-none"
-            onClick={handleDismissTutorial}
-            title="Dismiss tutorial"
-          >
-            ×
-          </button>
-          <div className="flex items-center gap-3">
-            <svg className="h-7 w-7 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <h2 className="text-xl font-bold text-purple-700">Welcome to the UTM Link Builder!</h2>
-          </div>
-          <ul className="list-disc pl-7 text-base text-gray-700 space-y-1">
-            <li><b>Enter your base URL</b> (e.g. https://example.com) and select <b>Source</b>, <b>Medium</b>, and (optionally) <b>Campaign</b>.</li>
-            <li>Click <b>Save</b> to add the generated UTM link to your <b>shared team history</b>.</li>
-            <li>Use the <b>+ Add advanced UTM fields</b> to add <b>Term</b> and <b>Content</b> if needed.</li>
-            <li>Filter, search, and sort your history. <b>Export</b> your filtered results to Excel anytime.</li>
-            <li>All changes are <b>shared instantly</b> with your team.</li>
-          </ul>
-          <div className="flex gap-2 mt-2 text-sm text-gray-500">
-            <span className="flex items-center gap-1"><svg className="h-4 w-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-3-3v6" /></svg>Click <b>+</b> for advanced fields</span>
-            <span className="flex items-center gap-1"><svg className="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 01-8 0" /></svg>Export to Excel with the top-right button</span>
-            <span className="flex items-center gap-1"><svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>Dismiss this tutorial anytime</span>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="w-full max-w-2xl mx-auto bg-gradient-to-r from-blue-100 via-purple-50 to-pink-100 border border-purple-200 rounded-2xl shadow-2xl p-10 flex flex-col gap-3 relative animate-fade-in">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-purple-600 text-xl font-bold focus:outline-none"
+              onClick={handleDismissTutorial}
+              title="Dismiss tutorial"
+            >
+              ×
+            </button>
+            <h2 className="text-2xl font-bold text-purple-700 mb-2">Welcome to the UTM Link Builder!</h2>
+            <p className="text-base text-gray-700 mb-4">Easily create, save, and manage UTM links for your campaigns. Here’s what you can do:</p>
+            <ul className="list-disc pl-7 text-base text-gray-700 space-y-2">
+              <li>Build UTM links with custom parameters and advanced fields.</li>
+              <li>Instantly copy your UTM link or generate a Bitly shortlink.</li>
+              <li>View, filter, and manage your link history in the table.</li>
+              <li>Export your history to Excel for reporting or sharing.</li>
+            </ul>
           </div>
         </div>
       )}
-      {latestLabel && (
-        <div className="mb-4 text-center text-xs text-gray-500 font-semibold tracking-wide">
-          {latestLabel}
-        </div>
-      )}
-      {/* After the tutorial banner, add a floating 'Need Help?' button if the tutorial is dismissed */}
+      {/* Need Help button (floating, bottom right) */}
       {!showTutorial && (
         <button
           className="fixed bottom-8 right-8 z-50 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-full shadow-xl text-base font-semibold hover:from-purple-600 hover:to-blue-600 focus:outline-none animate-pulse-slow"
@@ -465,413 +512,372 @@ export default function Page() {
           Need Help?
         </button>
       )}
-      {/* Add a stepper at the top */}
-      <div className="w-full max-w-3xl mx-auto flex justify-center gap-4 mb-4 animate-fade-in">
-        <div className={`flex flex-col items-center ${step === 1 ? 'text-purple-700 font-bold' : 'text-gray-400'}`}>
-          <div className={`rounded-full w-7 h-7 flex items-center justify-center border-2 ${step === 1 ? 'border-purple-500 bg-white focus-pulse' : 'border-gray-300 bg-gray-100'}`}>1</div>
-          <span className="text-xs mt-1">URL</span>
+      {/* Left: UTM Link Builder with stepper and wider column */}
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 border border-gray-100 flex-shrink-0 relative">
+        <h1 className="text-3xl font-extrabold text-center mb-4 text-blue-700 leading-tight tracking-tight relative">
+          UTM Link Builder
+          <span className="block w-12 h-1 mx-auto mt-2 rounded-full bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400"></span>
+        </h1>
+        {/* Stepper under heading */}
+        <div className="flex justify-center gap-4 mb-6">
+          <div className={`flex flex-col items-center ${step === 1 ? 'text-purple-700 font-bold' : 'text-gray-400'}`}> 
+            <div className={`rounded-full w-7 h-7 flex items-center justify-center border-2 ${step === 1 ? 'border-purple-500 bg-white focus-pulse' : 'border-gray-300 bg-gray-100'}`}>1</div>
+            <span className="text-xs mt-1">URL</span>
+          </div>
+          <div className="h-7 w-8 border-t-2 border-gray-200 mt-3"></div>
+          <div className={`flex flex-col items-center ${step === 2 ? 'text-purple-700 font-bold' : 'text-gray-400'}`}> 
+            <div className={`rounded-full w-7 h-7 flex items-center justify-center border-2 ${step === 2 ? 'border-purple-500 bg-white focus-pulse' : 'border-gray-300 bg-gray-100'}`}>2</div>
+            <span className="text-xs mt-1">Source</span>
+          </div>
+          <div className="h-7 w-8 border-t-2 border-gray-200 mt-3"></div>
+          <div className={`flex flex-col items-center ${step === 3 ? 'text-purple-700 font-bold' : 'text-gray-400'}`}> 
+            <div className={`rounded-full w-7 h-7 flex items-center justify-center border-2 ${step === 3 ? 'border-purple-500 bg-white focus-pulse' : 'border-gray-300 bg-gray-100'}`}>3</div>
+            <span className="text-xs mt-1">Medium</span>
+          </div>
         </div>
-        <div className="h-7 w-8 border-t-2 border-gray-200 mt-3"></div>
-        <div className={`flex flex-col items-center ${step === 2 ? 'text-purple-700 font-bold' : 'text-gray-400'}`}>
-          <div className={`rounded-full w-7 h-7 flex items-center justify-center border-2 ${step === 2 ? 'border-purple-500 bg-white focus-pulse' : 'border-gray-300 bg-gray-100'}`}>2</div>
-          <span className="text-xs mt-1">Source</span>
-        </div>
-        <div className="h-7 w-8 border-t-2 border-gray-200 mt-3"></div>
-        <div className={`flex flex-col items-center ${step === 3 ? 'text-purple-700 font-bold' : 'text-gray-400'}`}>
-          <div className={`rounded-full w-7 h-7 flex items-center justify-center border-2 ${step === 3 ? 'border-purple-500 bg-white focus-pulse' : 'border-gray-300 bg-gray-100'}`}>3</div>
-          <span className="text-xs mt-1">Medium</span>
-        </div>
-      </div>
-      <div className="flex flex-col lg:flex-row gap-8 w-full max-w-6xl">
-        <div className="w-full lg:w-1/2 bg-white rounded-2xl shadow-2xl p-8 border border-gray-100 lg:max-h-[90vh] lg:overflow-auto">
-          <div className="flex justify-center mb-1">
-            <Image src="/logo.png" alt="Logo" width={112} height={112} className="object-contain" />
-          </div>
-          <h1 className="text-4xl font-comfortaa text-center mb-8 text-blue-700 leading-tight">UTM Link Builder</h1>
-          <div className="space-y-4">
-            {/* Add animation and focus pulse to form fields */}
-            <input
-              className={`w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-900 text-base ${step === 1 ? 'focus-pulse border-purple-500' : ''}`}
-              placeholder="Base URL (e.g. https://example.com)"
-              value={baseURL}
-              onChange={e => setBaseURL(e.target.value)}
-            />
-
-            <div className="flex gap-4">
-              <div className="w-1/2">
-                <select
-                  className={`w-full p-3 border border-gray-300 rounded-lg text-gray-900 text-base ${step === 2 ? 'focus-pulse border-purple-500' : ''}`}
-                  value={showCustomSourceInput ? 'custom' : source}
-                  onChange={e => {
-                    if (e.target.value === 'custom') {
-                      setShowCustomSourceInput(true);
-                    } else {
-                      setSource(e.target.value);
-                    }
-                  }}
-                >
-                  <option value="">Select Source</option>
-                  {allSources.map(src => <option key={src} value={src}>{src}</option>)}
-                  <option value="custom">Add custom…</option>
-                </select>
-                {showCustomSourceInput && (
-                  <div className="flex mt-2 gap-2">
-                    <input
-                      className="flex-1 p-2 border border-gray-300 rounded-lg text-gray-900 text-base"
-                      placeholder="Enter custom source"
-                      value={newCustomSource}
-                      onChange={e => setNewCustomSource(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') handleAddCustomSource(); }}
-                      autoFocus
-                    />
-                    <button
-                      className="px-3 py-1 bg-blue-500 text-white rounded-lg text-sm font-semibold"
-                      onClick={handleAddCustomSource}
-                    >Add</button>
-                    <button
-                      className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold"
-                      onClick={() => { setShowCustomSourceInput(false); setNewCustomSource(''); }}
-                    >Cancel</button>
-                  </div>
-                )}
-              </div>
-              <div className="w-1/2">
-                <select
-                  className={`w-full p-3 border border-gray-300 rounded-lg text-gray-900 text-base ${step === 3 ? 'focus-pulse border-purple-500' : ''}`}
-                  value={showCustomMediumInput ? 'custom' : medium}
-                  onChange={e => {
-                    if (e.target.value === 'custom') {
-                      setShowCustomMediumInput(true);
-                    } else {
-                      setMedium(e.target.value);
-                    }
-                  }}
-                >
-                  <option value="">Select Medium</option>
-                  {allMediums.map(med => <option key={med} value={med}>{med}</option>)}
-                  <option value="custom">Add custom…</option>
-                </select>
-                {showCustomMediumInput && (
-                  <div className="flex mt-2 gap-2">
-                    <input
-                      className="flex-1 p-2 border border-gray-300 rounded-lg text-gray-900 text-base"
-                      placeholder="Enter custom medium"
-                      value={newCustomMedium}
-                      onChange={e => setNewCustomMedium(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') handleAddCustomMedium(); }}
-                      autoFocus
-                    />
-                    <button
-                      className="px-3 py-1 bg-blue-500 text-white rounded-lg text-sm font-semibold"
-                      onClick={handleAddCustomMedium}
-                    >Add</button>
-                    <button
-                      className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold"
-                      onClick={() => { setShowCustomMediumInput(false); setNewCustomMedium(''); }}
-                    >Cancel</button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Add animation and focus pulse to form fields */}
-            {/* Remove Campaign from main form and step logic */}
-
-            {/* In the form UI, add a + button to show advanced fields */}
-            <div className="flex justify-end mt-2">
-              {!showAdvanced && (
-                <button
-                  className="text-blue-500 text-sm font-semibold flex items-center gap-1 hover:underline"
-                  onClick={() => setShowAdvanced(true)}
-                  type="button"
-                >
-                  <span className="text-lg font-bold">+</span> Add advanced UTM fields
-                </button>
-              )}
-            </div>
-            {showAdvanced && (
-              <div className="space-y-2 mt-2">
-                <input
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-900 text-base"
-                  placeholder="Campaign (utm_campaign, optional)"
-                  value={campaign}
-                  onChange={e => setCampaign(e.target.value)}
-                />
-                <input
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-900 text-base"
-                  placeholder="Term (utm_term, optional)"
-                  value={term}
-                  onChange={e => setTerm(e.target.value)}
-                />
-                <input
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-900 text-base"
-                  placeholder="Content (utm_content, optional)"
-                  value={content}
-                  onChange={e => setContent(e.target.value)}
-                />
-                <button
-                  className="text-blue-500 text-xs font-semibold hover:underline mt-1"
-                  onClick={() => setShowAdvanced(false)}
-                  type="button"
-                >Hide advanced fields</button>
-              </div>
-            )}
-          </div>
-
-          {/* Always visible output box */}
-          <div className="bg-blue-50 border border-blue-200 p-5 rounded-xl shadow-md mt-8 min-h-[56px] flex items-center">
-            <p className={`break-words font-semibold text-base w-full ${generatedURL ? 'text-gray-900' : 'text-gray-400'}`}>{generatedURL || 'Your UTM link will appear here...'}</p>
-          </div>
-
-          {/* Minimalistic buttons below the box */}
-          {/* In the button row (Shorten, Copy, Save), use flex justify-center gap-3 and consistent button heights */}
-          <div className="flex gap-3 justify-center mt-3 items-center">
-            <button
-              className={`flex items-center gap-2 border border-[#ee6123] text-[#ee6123] bg-white px-4 py-1.5 rounded-full font-medium shadow-sm transition text-base hover:bg-[#ee6123] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#ee6123] disabled:opacity-50 disabled:cursor-not-allowed h-10`}
-              onClick={handleBitly}
-              disabled={!generatedURL || bitlyLoading}
-              title="Shorten with Bitly"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-5 w-5" fill="#ee6123"><path d="M23.6 8.4c-2.1-2.1-5.5-2.1-7.6 0l-6.2 6.2c-2.1 2.1-2.1 5.5 0 7.6 2.1 2.1 5.5 2.1 7.6 0l1.2-1.2c.4-.4.4-1 0-1.4s-1-.4-1.4 0l-1.2 1.2c-1.3 1.3-3.3 1.3-4.6 0-1.3-1.3-1.3-3.3 0-4.6l6.2-6.2c1.3-1.3 3.3-1.3 4.6 0 1.3 1.3 1.3 3.3 0 4.6l-.7.7c-.4.4-.4 1 0 1.4.4.4 1 .4 1.4 0l.7-.7c2.1-2.1 2.1-5.5 0-7.6z"/></svg>
-              {bitlyLoading ? 'Shortening...' : 'Shorten with Bitly'}
-            </button>
-            <button
-              className={`flex items-center gap-2 border border-blue-500 text-blue-700 px-4 py-1.5 rounded-full font-medium shadow-sm transition text-base hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed h-10 ${step === 4 ? 'focus-pulse border-purple-500' : ''}`}
-              onClick={handleCopy}
-              disabled={!generatedURL}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8M8 12h8m-7 8h6a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v2" /></svg>
-              {copied ? 'Copied!' : 'Copy'}
-            </button>
-            <button
-              className={`flex items-center gap-2 border border-green-500 text-green-700 px-4 py-1.5 rounded-full font-medium shadow-sm transition text-base hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-300 disabled:opacity-50 disabled:cursor-not-allowed h-10 ${step === 4 ? 'focus-pulse border-purple-500' : ''}`}
-              onClick={saveToHistory}
-              disabled={!generatedURL}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-              Save
-            </button>
-          </div>
-          {bitlyResult && bitlyResult.url && (
-            <div className="flex justify-center mt-2">
-              <button
-                className="inline-flex items-center gap-1 bg-orange-50 border border-[#ee6123] px-2 py-0.5 rounded-full min-w-0 flex-nowrap hover:bg-orange-100 transition relative"
-                title="Copy shortlink"
-                onClick={() => {
-                  navigator.clipboard.writeText(bitlyResult.url);
-                  setCopiedHistoryId('bitly-ui');
-                  setTimeout(() => setCopiedHistoryId(null), 1200);
-                }}
-                style={{ lineHeight: 0 }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-4 w-4 flex-shrink-0" fill="#ee6123"><path d="M23.6 8.4c-2.1-2.1-5.5-2.1-7.6 0l-6.2 6.2c-2.1 2.1-2.1 5.5 0 7.6 2.1 2.1 5.5 2.1 7.6 0l1.2-1.2c.4-.4.4-1 0-1.4s-1-.4-1.4 0l-1.2 1.2c-1.3 1.3-3.3 1.3-4.6 0-1.3-1.3-1.3-3.3 0-4.6l6.2-6.2c1.3-1.3 3.3-1.3 4.6 0 1.3 1.3 1.3 3.3 0 4.6l-.7.7c-.4.4-.4 1 0 1.4.4.4 1 .4 1.4 0l.7-.7c2.1-2.1 2.1-5.5 0-7.6z"/></svg>
-                <span style={{ color: '#ee6123', fontWeight: 600, fontSize: '0.95rem', lineHeight: '1.2', display: 'inline-block', verticalAlign: 'middle' }}>Bitly</span>
-                {copiedHistoryId === 'bitly-ui' && (
-                  <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#ee6123] text-white text-xs rounded px-2 py-0.5 shadow">Copied!</span>
-                )}
-              </button>
-            </div>
-          )}
-        </div>
-        <div className="w-full lg:w-1/2 bg-white rounded-2xl shadow-2xl p-8 border border-gray-100 mt-10 lg:mt-0 h-fit animate-fade-in">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-comfortaa text-purple-700 leading-tight">History</h2>
-            <button
-              className="flex items-center gap-1 px-3 py-1.5 border border-green-500 text-green-700 bg-white rounded-full text-sm font-medium shadow-sm hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-300 transition"
-              onClick={handleExportExcel}
-              type="button"
-              title="Export to Excel"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-              Export
-            </button>
-          </div>
-          <div className="flex gap-2 mb-4">
-            <button
-              className={`px-4 py-2 rounded-t-lg font-semibold text-base border-b-2 transition ${historyTab === 'all' ? 'border-purple-500 text-purple-700 bg-white' : 'border-transparent text-gray-400 bg-gray-50 hover:text-purple-500'}`}
-              onClick={() => setHistoryTab('all')}
-            >
-              All
-            </button>
-            <button
-              className={`px-4 py-2 rounded-t-lg font-semibold text-base border-b-2 transition flex items-center gap-2 ${historyTab === 'utm' ? 'border-blue-500 text-blue-700 bg-white' : 'border-transparent text-gray-400 bg-gray-50 hover:text-blue-500'}`}
-              onClick={() => setHistoryTab('utm')}
-            >
-              UTM Links
-            </button>
-            <button
-              className={`px-4 py-2 rounded-t-lg font-semibold text-base border-b-2 transition flex items-center gap-2 ${historyTab === 'shortlinks' ? 'border-[#ee6123] text-[#ee6123] bg-white' : 'border-transparent text-gray-400 bg-gray-50 hover:text-[#ee6123]'}`}
-              onClick={() => setHistoryTab('shortlinks')}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-5 w-5" fill="#ee6123"><path d="M23.6 8.4c-2.1-2.1-5.5-2.1-7.6 0l-6.2 6.2c-2.1 2.1-2.1 5.5 0 7.6 2.1 2.1 5.5 2.1 7.6 0l1.2-1.2c.4-.4.4-1 0-1.4s-1-.4-1.4 0l-1.2 1.2c-1.3 1.3-3.3 1.3-4.6 0-1.3-1.3-1.3-3.3 0-4.6l6.2-6.2c1.3-1.3 3.3-1.3 4.6 0 1.3 1.3 1.3 3.3 0 4.6l-.7.7c-.4.4-.4 1 0 1.4.4.4 1 .4 1.4 0l.7-.7c2.1-2.1 2.1-5.5 0-7.6z"/></svg>
-              Shortlinks
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2 items-center bg-purple-50 border border-purple-100 rounded-xl px-4 py-3 mb-4">
-            <span className="text-sm text-purple-700 font-semibold mr-2">Sort/Filter by:</span>
-            <select
-              className="p-2 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-purple-300 text-gray-900"
-              value={sortField}
-              onChange={e => {
-                const val = e.target.value as typeof sortField;
-                setSortField(val);
-                setFieldFilter('');
-              }}
-            >
-              <option value="all">All</option>
-              <option value="source">Source</option>
-              <option value="medium">Medium</option>
-              <option value="campaign">Campaign</option>
-              <option value="url">URL</option>
-            </select>
-            <select
-              className="p-2 border border-gray-300 rounded-lg text-base w-40 focus:outline-none focus:ring-2 focus:ring-purple-300 text-gray-900"
-              value={fieldFilter}
-              onChange={e => {
-                const val = e.target.value;
-                setFieldFilter(val === '' ? '' : val);
-              }}
-              disabled={sortField === 'all'}
-            >
-              <option value="">All</option>
-              {((sortField === 'source' ? sourceOptions : sortField === 'medium' ? mediumOptions : sortField === 'campaign' ? campaignOptions : sortField === 'url' ? urlOptions : [])
-                .filter((opt): opt is string => typeof opt === 'string'))
-                .map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-            </select>
-            <button
-              className="p-2 border border-gray-300 rounded-lg text-base text-gray-700 hover:bg-purple-100 ml-2"
-              onClick={() => { setMonthFilter(''); setFieldFilter(''); setFilter(''); setSearch(''); setSortField('all'); }}
-            >Clear</button>
-          </div>
-          {/* Minimal date controls below search, above history */}
-          <div className="flex flex-wrap gap-2 items-center justify-end mb-4 text-xs text-gray-600">
-            <span>Date:</span>
-            <select
-              className="p-1 border border-gray-200 rounded focus:outline-none text-xs text-gray-700"
-              value={dateSort}
-              onChange={e => setDateSort(e.target.value as 'latest' | 'oldest')}
-            >
-              <option value="latest">Latest</option>
-              <option value="oldest">Oldest</option>
-            </select>
-            <select
-              className="p-1 border border-gray-200 rounded focus:outline-none text-xs text-gray-700"
-              value={monthFilter}
-              onChange={e => setMonthFilter(e.target.value)}
-            >
-              <option value="">All Months</option>
-              {monthOptions.map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-          </div>
+        <div className="space-y-4">
           <input
-            className="p-2 border border-gray-300 rounded-lg text-base w-full mb-6 focus:outline-none focus:ring-2 focus:ring-purple-300 text-gray-900"
-            placeholder="Search in history..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
+            className={`w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-900 text-base ${step === 1 ? 'focus-pulse border-purple-500' : ''}`}
+            placeholder="Base URL (e.g. https://example.com)"
+            value={baseURL}
+            onChange={e => setBaseURL(e.target.value)}
           />
           <div className="space-y-3">
-            {displayedHistory.length === 0 && (
-              <div className="text-center text-gray-400 py-8 bg-white rounded-lg shadow-inner text-base">No history found.</div>
-            )}
-            {/* Filter history for the selected tab */}
-            {displayedHistory.slice(0, historyLimit).map(entry => (
-              <div
-                key={entry.id}
-                className={`group bg-white border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition mb-3 flex flex-col gap-2 relative ${entry.id === newlyAddedId ? 'bg-green-50 border-green-400 animate-fade-highlight' : ''}`}
-                style={{ minHeight: 80 }}
-              >
-                {/* Top row: Link, copy chip, Bitly chip */}
-                <div className="flex flex-wrap items-center gap-2 mb-1">
-                  {/* Blue link icon + link (smart truncated, tooltip) */}
-                  <span className="flex items-center gap-1 max-w-[400px] truncate" title={entry.url}>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="#2563eb"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 010 5.656m-3.656-3.656a4 4 0 015.656 0m-7.778 7.778a4 4 0 005.656 0l4.242-4.242a4 4 0 00-5.656-5.656l-1.414 1.414" /></svg>
-                    <a
-                      href={entry.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-700 font-semibold hover:underline max-w-[360px] truncate"
-                      style={{ fontSize: '0.98rem', verticalAlign: 'middle', display: 'inline-block' }}
-                      title={entry.url}
-                    >
-                      {smartTruncateUrl(entry.url, 56)}
-                    </a>
-                  </span>
-                  {/* Copy chip */}
-                  <button
-                    className="inline-flex items-center gap-1 bg-blue-50 border border-blue-400 px-2 py-0.5 rounded-full min-w-0 flex-nowrap hover:bg-blue-100 transition relative shadow-sm text-blue-700 font-semibold text-xs"
-                    title="Copy UTM link"
-                    onClick={() => handleCopyHistory(entry.url, entry.id)}
-                    style={{ lineHeight: 1 }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="#2563eb"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="#2563eb" strokeWidth="2" fill="none"/><rect x="3" y="3" width="13" height="13" rx="2" ry="2" stroke="#2563eb" strokeWidth="2" fill="none"/></svg>
-                    Copy
-                    {copiedHistoryId === entry.id && (
-                      <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs rounded px-2 py-0.5 shadow">Copied!</span>
-                    )}
-                  </button>
-                  {/* Bitly chip */}
-                  {entry.bitly_url && (
-                    <button
-                      className="inline-flex items-center gap-1 bg-orange-50 border border-[#ee6123] px-2 py-0.5 rounded-full min-w-0 flex-nowrap hover:bg-orange-100 transition relative shadow-sm text-[#ee6123] font-semibold text-xs"
-                      title="Copy shortlink"
-                      onClick={() => handleCopyHistory(entry.bitly_url!, entry.id + '-bitly')}
-                      style={{ lineHeight: 1 }}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-4 w-4 flex-shrink-0" fill="#ee6123"><path d="M23.6 8.4c-2.1-2.1-5.5-2.1-7.6 0l-6.2 6.2c-2.1 2.1-2.1 5.5 0 7.6 2.1 2.1 5.5 2.1 7.6 0l1.2-1.2c.4-.4.4-1 0-1.4s-1-.4-1.4 0l-1.2 1.2c-1.3 1.3-3.3 1.3-4.6 0-1.3-1.3-1.3-3.3 0-4.6l6.2-6.2c1.3-1.3 3.3-1.3 4.6 0 1.3 1.3 1.3 3.3 0 4.6l-.7.7c-.4.4-.4 1 0 1.4.4.4 1 .4 1.4 0l.7-.7c2.1-2.1 2.1-5.5 0-7.6z"/></svg>
-                      Bitly
-                      {copiedHistoryId === entry.id + '-bitly' && (
-                        <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#ee6123] text-white text-xs rounded px-2 py-0.5 shadow">Copied!</span>
-                      )}
-                    </button>
-                  )}
-                </div>
-                {/* Second row: tags */}
-                <div className="flex flex-wrap gap-1 items-center mt-1 mb-1">
-                  {entry.source && (
-                    <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-full">Source: {entry.source}</span>
-                  )}
-                  {entry.medium && (
-                    <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded-full">Medium: {entry.medium}</span>
-                  )}
-                  {entry.campaign && (
-                    <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-0.5 rounded-full">Campaign: {entry.campaign}</span>
-                  )}
-                  {entry.term && (
-                    <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-0.5 rounded-full">Term: {entry.term}</span>
-                  )}
-                  {entry.content && (
-                    <span className="bg-pink-100 text-pink-800 text-xs font-semibold px-2 py-0.5 rounded-full">Content: {entry.content}</span>
-                  )}
-                </div>
-                {/* Third row: date/time and delete */}
-                <div className="flex items-center justify-between mt-1">
-                  <span className="text-xs text-gray-400 font-medium">{new Date(entry.timestamp).toLocaleString()}</span>
-                  <button
-                    className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-red-500 text-xs font-bold px-3 py-1 rounded-full hover:bg-red-50 shadow-sm"
-                    onClick={() => deleteFromHistory(entry.id)}
-                    style={{ fontSize: '0.95rem' }}
-                  >
-                    Delete
-                  </button>
-                </div>
+            <select
+              className={`w-full p-3 border border-gray-300 rounded-lg text-gray-900 text-base ${step === 2 ? 'focus-pulse border-purple-500' : ''}`}
+              value={showCustomSourceInput ? 'custom' : source}
+              onChange={e => {
+                if (e.target.value === 'custom') {
+                  setShowCustomSourceInput(true);
+                } else {
+                  setSource(e.target.value);
+                }
+              }}
+            >
+              <option value="">Select Source</option>
+              {allSources.map(src => <option key={src} value={src}>{src}</option>)}
+              <option value="custom">Add custom…</option>
+            </select>
+            {showCustomSourceInput && (
+              <div className="flex mt-2 gap-2">
+                <input
+                  className="flex-1 p-2 border border-gray-300 rounded-lg text-gray-900 text-base"
+                  placeholder="Enter custom source"
+                  value={newCustomSource}
+                  onChange={e => setNewCustomSource(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleAddCustomSource(); }}
+                  autoFocus
+                />
+                <button
+                  className="px-3 py-1 bg-blue-500 text-white rounded-lg text-sm font-semibold"
+                  onClick={handleAddCustomSource}
+                >Add</button>
+                <button
+                  className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold"
+                  onClick={() => { setShowCustomSourceInput(false); setNewCustomSource(''); }}
+                >Cancel</button>
               </div>
-            ))}
+            )}
+            <select
+              className={`w-full p-3 border border-gray-300 rounded-lg text-gray-900 text-base ${step === 3 ? 'focus-pulse border-purple-500' : ''}`}
+              value={showCustomMediumInput ? 'custom' : medium}
+              onChange={e => {
+                if (e.target.value === 'custom') {
+                  setShowCustomMediumInput(true);
+                } else {
+                  setMedium(e.target.value);
+                }
+              }}
+            >
+              <option value="">Select Medium</option>
+              {allMediums.map(med => <option key={med} value={med}>{med}</option>)}
+              <option value="custom">Add custom…</option>
+            </select>
+            {showCustomMediumInput && (
+              <div className="flex mt-2 gap-2">
+                <input
+                  className="flex-1 p-2 border border-gray-300 rounded-lg text-gray-900 text-base"
+                  placeholder="Enter custom medium"
+                  value={newCustomMedium}
+                  onChange={e => setNewCustomMedium(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleAddCustomMedium(); }}
+                  autoFocus
+                />
+                <button
+                  className="px-3 py-1 bg-blue-500 text-white rounded-lg text-sm font-semibold"
+                  onClick={handleAddCustomMedium}
+                >Add</button>
+                <button
+                  className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold"
+                  onClick={() => { setShowCustomMediumInput(false); setNewCustomMedium(''); }}
+                >Cancel</button>
+              </div>
+            )}
           </div>
-          {displayedHistory.length > historyLimit && (
-            <div className="flex justify-center mt-4">
+          <div className="flex justify-end mt-2">
+            {!showAdvanced && (
               <button
-                className="px-6 py-2 bg-purple-100 text-purple-700 rounded-full font-semibold shadow hover:bg-purple-200 transition"
-                onClick={() => setHistoryLimit(l => l + 10)}
+                className="text-blue-500 text-sm font-semibold flex items-center gap-1 hover:underline"
+                onClick={() => setShowAdvanced(true)}
+                type="button"
               >
-                Show More
+                <span className="text-lg font-bold">+</span> Add advanced UTM fields
               </button>
+            )}
+          </div>
+          {showAdvanced && (
+            <div className="space-y-2 mt-2">
+              <input
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-900 text-base"
+                placeholder="Campaign (utm_campaign, optional)"
+                value={campaign}
+                onChange={e => setCampaign(e.target.value)}
+              />
+              <input
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-900 text-base"
+                placeholder="Term (utm_term, optional)"
+                value={term}
+                onChange={e => setTerm(e.target.value)}
+              />
+              <input
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition text-gray-900 text-base"
+                placeholder="Content (utm_content, optional)"
+                value={content}
+                onChange={e => setContent(e.target.value)}
+              />
+              <button
+                className="text-blue-500 text-xs font-semibold hover:underline mt-1"
+                onClick={() => setShowAdvanced(false)}
+                type="button"
+              >Hide advanced fields</button>
             </div>
           )}
         </div>
+        <div className="bg-blue-50 border border-blue-200 p-5 rounded-xl shadow-md mt-8 min-h-[56px] flex items-center">
+          <p className={`break-words font-semibold text-base w-full ${generatedURL ? 'text-gray-900' : 'text-gray-400'}`}>{generatedURL || 'Your UTM link will appear here...'}</p>
+        </div>
+        <div className="flex gap-3 justify-center mt-3 items-center">
+          <button
+            className={`flex items-center gap-2 border border-[#ee6123] text-[#ee6123] bg-white px-4 py-1.5 rounded-full font-medium shadow-sm transition text-base hover:bg-[#ee6123] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#ee6123] disabled:opacity-50 disabled:cursor-not-allowed h-10`}
+            onClick={handleBitly}
+            disabled={!generatedURL || bitlyLoading}
+            title="Shorten with Bitly"
+          >
+            Bitly
+          </button>
+          <button
+            className={`flex items-center gap-2 border border-blue-500 text-blue-700 px-4 py-1.5 rounded-full font-medium shadow-sm transition text-base hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed h-10`}
+            onClick={handleCopy}
+            disabled={!generatedURL}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8M8 12h8m-7 8h6a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v2" /></svg>
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
+          <button
+            className={`flex items-center gap-2 border border-green-500 text-green-700 px-4 py-1.5 rounded-full font-medium shadow-sm transition text-base hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-300 disabled:opacity-50 disabled:cursor-not-allowed h-10`}
+            onClick={saveToHistory}
+            disabled={!generatedURL}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+            Save
+          </button>
+        </div>
+        {bitlyResult && bitlyResult.url && (
+          <div className="flex justify-center mt-2">
+            <button
+              className="inline-flex items-center gap-1 bg-orange-50 border border-[#ee6123] px-2 py-0.5 rounded-full min-w-0 flex-nowrap hover:bg-orange-100 transition relative"
+              title="Copy shortlink"
+              onClick={() => {
+                navigator.clipboard.writeText(bitlyResult.url);
+                setCopiedHistoryId('bitly-ui');
+                setTimeout(() => setCopiedHistoryId(null), 1200);
+              }}
+              style={{ lineHeight: 0 }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-4 w-4 flex-shrink-0" fill="#ee6123"><path d="M23.6 8.4c-2.1-2.1-5.5-2.1-7.6 0l-6.2 6.2c-2.1 2.1-2.1 5.5 0 7.6 2.1 2.1 5.5 2.1 7.6 0l1.2-1.2c.4-.4.4-1 0-1.4s-1-.4-1.4 0l-1.2 1.2c-1.3 1.3-3.3 1.3-4.6 0-1.3-1.3-1.3-3.3 0-4.6l6.2-6.2c1.3-1.3 3.3-1.3 4.6 0 1.3 1.3 1.3 3.3 0 4.6l-.7.7c-.4.4-.4 1 0 1.4.4.4 1 .4 1.4 0l.7-.7c2.1-2.1 2.1-5.5 0-7.6z"/></svg>
+              <span style={{ color: '#ee6123', fontWeight: 600, fontSize: '0.95rem', lineHeight: '1.2', display: 'inline-block', verticalAlign: 'middle' }}>Bitly</span>
+              {copiedHistoryId === 'bitly-ui' && (
+                <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#ee6123] text-white text-xs rounded px-2 py-0.5 shadow">Copied!</span>
+              )}
+            </button>
+          </div>
+        )}
+      </div>
+      {/* Right: History Table */}
+      <div className="flex-1 bg-white rounded-2xl shadow-2xl p-6 border border-gray-100 overflow-x-auto">
+        <div className="flex items-center mb-4 gap-4">
+          <h2 className="text-2xl font-extrabold text-purple-700 leading-tight tracking-tight mb-2 text-left relative flex-shrink-0">
+            History
+            <span className="block w-10 h-1 mt-1 rounded-full bg-gradient-to-r from-purple-400 via-blue-400 to-pink-400"></span>
+          </h2>
+          <div className="flex-grow"></div>
+          <input
+            type="text"
+            className="max-w-xs px-3 py-2 border border-gray-300 rounded-lg text-base text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-300"
+            placeholder="Search history..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{ minWidth: 180 }}
+          />
+          <button
+            className="flex items-center gap-1 px-3 py-1.5 border border-green-500 text-green-700 bg-white rounded-full text-sm font-medium shadow-sm hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-300 transition ml-2 flex-shrink-0"
+            onClick={handleExportExcel}
+            type="button"
+            title="Export to Excel"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+            Export
+          </button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm text-left border-collapse">
+            <thead className="sticky top-0 bg-white z-10">
+              <tr>
+                {[
+                  { key: 'url', label: 'UTM Link' },
+                  { key: 'bitly_url', label: 'Bitly' },
+                  { key: 'source', label: 'Source' },
+                  { key: 'medium', label: 'Medium' },
+                  { key: 'campaign', label: 'Campaign' },
+                  { key: 'term', label: 'Term' },
+                  { key: 'content', label: 'Content' },
+                  { key: 'timestamp', label: 'Date' },
+                  { key: 'actions', label: 'Actions', sortable: false },
+                ].map(col => (
+                  <th
+                    key={col.key}
+                    className={`px-3 py-2 font-semibold text-gray-700 border-b cursor-pointer select-none ${col.sortable === false ? '' : 'hover:text-purple-700'}`}
+                    onClick={() => {
+                      if (col.sortable === false) return;
+                      if (sortColumn === col.key) {
+                        setSortDirection(d => d === 'asc' ? 'desc' : 'asc');
+                      } else {
+                        setSortColumn(col.key);
+                        setSortDirection('asc');
+                      }
+                    }}
+                  >
+                    {col.label}
+                    {col.sortable === false ? null : sortColumn === col.key ? (
+                      <span className="ml-1 text-xs">{sortDirection === 'asc' ? '▲' : '▼'}</span>
+                    ) : (
+                      <span className="ml-1 text-xs text-gray-300">▲▼</span>
+                    )}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {displayedHistory.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="text-center text-gray-400 py-8 bg-white rounded-lg shadow-inner text-base">No history found.</td>
+                </tr>
+              )}
+              {displayedHistory.slice(0, historyLimit).map((entry, idx) => (
+                <tr key={entry.id} className={`hover:bg-blue-50 transition ${entry.id === newlyAddedId ? 'bg-green-50 border-green-400 animate-fade-highlight' : ''} ${idx !== displayedHistory.slice(0, historyLimit).length - 1 ? 'border-b border-gray-200' : ''}`}>
+                  {/* UTM Link */}
+                  <td className="px-3 py-2 align-middle max-w-[340px] whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={entry.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-700 font-semibold hover:underline max-w-[220px] overflow-hidden text-ellipsis whitespace-nowrap"
+                        title={entry.url}
+                        style={{ display: 'inline-block', verticalAlign: 'middle' }}
+                      >
+                        {entry.url}
+                      </a>
+                      <button
+                        className="inline-flex items-center gap-1 bg-blue-50 border border-blue-400 px-2 py-0.5 rounded-full hover:bg-blue-100 transition text-blue-700 font-semibold text-xs"
+                        title="Copy UTM link"
+                        onClick={() => handleCopyHistory(entry.url, entry.id)}
+                        style={{ lineHeight: 1 }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="#2563eb"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="#2563eb" strokeWidth="2" fill="none"/><rect x="3" y="3" width="13" height="13" rx="2" ry="2" stroke="#2563eb" strokeWidth="2" fill="none"/></svg>
+                        Copy
+                        {copiedHistoryId === entry.id && (
+                          <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs rounded px-2 py-0.5 shadow">Copied!</span>
+                        )}
+                      </button>
+                    </div>
+                  </td>
+                  {/* Bitly Link */}
+                  <td className="px-3 py-2 align-middle max-w-[180px] whitespace-nowrap">
+                    {entry.bitly_url && (
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={entry.bitly_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#ee6123] font-semibold hover:underline max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap"
+                          title={entry.bitly_url}
+                          style={{ display: 'inline-block', verticalAlign: 'middle' }}
+                        >
+                          {entry.bitly_url}
+                        </a>
+                        <button
+                          className="inline-flex items-center gap-1 bg-orange-50 border border-[#ee6123] px-2 py-0.5 rounded-full hover:bg-orange-100 transition text-[#ee6123] font-semibold text-xs"
+                          title="Copy shortlink"
+                          onClick={() => handleCopyHistory(entry.bitly_url!, entry.id + '-bitly')}
+                          style={{ lineHeight: 1 }}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-4 w-4 flex-shrink-0" fill="#ee6123"><path d="M23.6 8.4c-2.1-2.1-5.5-2.1-7.6 0l-6.2 6.2c-2.1 2.1-2.1 5.5 0 7.6 2.1 2.1 5.5 2.1 7.6 0l1.2-1.2c.4-.4.4-1 0-1.4s-1-.4-1.4 0l-1.2 1.2c-1.3 1.3-3.3 1.3-4.6 0-1.3-1.3-1.3-3.3 0-4.6l6.2-6.2c1.3-1.3 3.3-1.3 4.6 0 1.3 1.3 1.3 3.3 0 4.6l-.7.7c-.4.4-.4 1 0 1.4.4.4 1 .4 1.4 0l.7-.7c2.1-2.1 2.1-5.5 0-7.6z"/></svg>
+                          Copy
+                          {copiedHistoryId === entry.id + '-bitly' && (
+                            <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#ee6123] text-white text-xs rounded px-2 py-0.5 shadow">Copied!</span>
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                  {/* Source */}
+                  <td className="px-3 py-2 align-middle whitespace-nowrap">
+                    <span className="text-blue-700 font-semibold">{entry.source}</span>
+                  </td>
+                  {/* Medium */}
+                  <td className="px-3 py-2 align-middle whitespace-nowrap">
+                    <span className="text-green-700 font-semibold">{entry.medium}</span>
+                  </td>
+                  {/* Campaign */}
+                  <td className="px-3 py-2 align-middle whitespace-nowrap">
+                    <span className="text-purple-700 font-semibold">{entry.campaign}</span>
+                  </td>
+                  {/* Term */}
+                  <td className="px-3 py-2 align-middle whitespace-nowrap">
+                    <span className="text-yellow-700 font-semibold">{entry.term}</span>
+                  </td>
+                  {/* Content */}
+                  <td className="px-3 py-2 align-middle whitespace-nowrap">
+                    <span className="text-pink-700 font-semibold">{entry.content}</span>
+                  </td>
+                  {/* Date */}
+                  <td className="px-3 py-2 align-middle whitespace-nowrap text-xs text-gray-500">{new Date(entry.timestamp).toLocaleString()}</td>
+                  {/* Actions */}
+                  <td className="px-3 py-2 align-middle whitespace-nowrap">
+                    <button
+                      className="text-red-500 text-xs font-bold px-3 py-1 rounded-full hover:bg-red-50 transition shadow-sm"
+                      onClick={() => deleteFromHistory(entry.id)}
+                      style={{ fontSize: '0.95rem' }}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {displayedHistory.length > historyLimit && (
+          <div className="flex justify-center mt-4">
+            <button
+              className="px-6 py-2 bg-purple-100 text-purple-700 rounded-full font-semibold shadow hover:bg-purple-200 transition"
+              onClick={() => setHistoryLimit(l => l + 10)}
+            >
+              Show More
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
