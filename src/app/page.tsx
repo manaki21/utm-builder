@@ -336,6 +336,35 @@ export default function Page() {
     }
   };
 
+  const [activeTab, setActiveTab] = useState<'history' | 'shortlinks'>('history');
+  const [bitlyLoading, setBitlyLoading] = useState(false);
+  const [bitlyResult, setBitlyResult] = useState<{ url: string; duplicate: boolean } | null>(null);
+  const [shortlinks, setShortlinks] = useState<{ utm_url: string; bitly_url: string; created_at: string }[]>([]);
+
+  // Fetch shortlinks for the tab
+  useEffect(() => {
+    if (activeTab === 'shortlinks') {
+      fetch('/api/bitly?all=1').then(res => res.json()).then(data => {
+        if (Array.isArray(data)) setShortlinks(data);
+      });
+    }
+  }, [activeTab]);
+
+  // Bitly button handler
+  const handleBitly = async () => {
+    setBitlyLoading(true);
+    setBitlyResult(null);
+    const res = await fetch('/api/bitly', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ utm_url: generatedURL })
+    });
+    const data = await res.json();
+    setBitlyLoading(false);
+    if (data.bitly_url) setBitlyResult({ url: data.bitly_url, duplicate: data.duplicate });
+    else setBitlyResult(null);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100 flex flex-col items-center justify-center py-8 px-2">
       {showTutorial && (
@@ -543,6 +572,15 @@ export default function Page() {
           {/* Minimalistic buttons below the box */}
           <div className="flex gap-3 justify-center mt-3">
             <button
+              className={`flex items-center gap-2 border border-[#ee6123] text-[#ee6123] bg-white px-4 py-1.5 rounded-full font-medium shadow-sm transition text-base hover:bg-[#ee6123] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#ee6123] disabled:opacity-50 disabled:cursor-not-allowed`}
+              onClick={handleBitly}
+              disabled={!generatedURL || bitlyLoading}
+              title="Shorten with Bitly"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-5 w-5" fill="#ee6123"><path d="M23.6 8.4c-2.1-2.1-5.5-2.1-7.6 0l-6.2 6.2c-2.1 2.1-2.1 5.5 0 7.6 2.1 2.1 5.5 2.1 7.6 0l1.2-1.2c.4-.4.4-1 0-1.4s-1-.4-1.4 0l-1.2 1.2c-1.3 1.3-3.3 1.3-4.6 0-1.3-1.3-1.3-3.3 0-4.6l6.2-6.2c1.3-1.3 3.3-1.3 4.6 0 1.3 1.3 1.3 3.3 0 4.6l-.7.7c-.4.4-.4 1 0 1.4.4.4 1 .4 1.4 0l.7-.7c2.1-2.1 2.1-5.5 0-7.6z"/></svg>
+              {bitlyLoading ? 'Shortening...' : 'Shorten with Bitly'}
+            </button>
+            <button
               className={`flex items-center gap-2 border border-blue-500 text-blue-700 px-4 py-1.5 rounded-full font-medium shadow-sm transition text-base hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed ${step === 4 ? 'focus-pulse border-purple-500' : ''}`}
               onClick={handleCopy}
               disabled={!generatedURL}
@@ -559,8 +597,17 @@ export default function Page() {
               Save
             </button>
           </div>
+          {bitlyResult && (
+            <div className={`mt-2 text-center text-base ${bitlyResult.duplicate ? 'text-yellow-600' : 'text-[#ee6123]'}`}>
+              {bitlyResult.duplicate ? (
+                <span>Shortlink already exists: <a href={bitlyResult.url} target="_blank" rel="noopener noreferrer" className="underline font-bold">{bitlyResult.url}</a></span>
+              ) : (
+                <span>Bitly shortlink: <a href={bitlyResult.url} target="_blank" rel="noopener noreferrer" className="underline font-bold">{bitlyResult.url}</a></span>
+              )}
+            </div>
+          )}
         </div>
-        <div className="w-full lg:w-1/2 bg-white rounded-2xl shadow-2xl p-8 border border-gray-100 mt-10 lg:mt-0 h-fit">
+        <div className="w-full lg:w-1/2 bg-white rounded-2xl shadow-2xl p-8 border border-gray-100 mt-10 lg:mt-0 h-fit animate-fade-in">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-comfortaa text-purple-700 leading-tight">History</h2>
             <button
