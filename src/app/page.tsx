@@ -773,69 +773,66 @@ export default function Page() {
             {displayedHistory.slice(0, historyLimit).map(entry => (
               <div
                 key={entry.id}
-                className={`bg-white border border-gray-200 p-4 rounded-xl shadow hover:shadow-lg transition mb-2 flex flex-col gap-2 ${entry.id === newlyAddedId ? 'bg-green-50 border-green-400 animate-fade-highlight' : ''}`}
+                className={`group bg-white border border-gray-200 p-5 rounded-2xl shadow-md hover:shadow-xl transition mb-3 flex flex-col gap-2 relative ${entry.id === newlyAddedId ? 'bg-green-50 border-green-400 animate-fade-highlight' : ''}`}
+                style={{ minHeight: 80 }}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div className="overflow-hidden min-w-0 w-full">
-                    {/* UTM Link chip */}
-                    <div className="flex items-center gap-2 mb-1">
-                      <button
-                        className="inline-flex items-center gap-1 bg-blue-50 border border-blue-400 px-2 py-0.5 rounded-full min-w-0 flex-nowrap hover:bg-blue-100 transition relative max-w-xs truncate"
-                        title="Copy UTM link"
-                        onClick={() => handleCopyHistory(entry.url, entry.id)}
-                        style={{ lineHeight: 0 }}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" strokeWidth="2" fill="none"/><rect x="3" y="3" width="13" height="13" rx="2" ry="2" stroke="currentColor" strokeWidth="2" fill="none"/></svg>
-                        <span style={{ color: '#2563eb', fontWeight: 600, fontSize: '0.85rem', lineHeight: '1.2', maxWidth: 120, display: 'inline-block', verticalAlign: 'middle' }}>{entry.url ? (entry.url.length > 32 ? entry.url.slice(0, 32) + '…' : entry.url) : '(empty)'}</span>
-                        {copiedHistoryId === entry.id && (
-                          <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs rounded px-2 py-0.5 shadow">Copied!</span>
-                        )}
-                      </button>
-                    </div>
-                    {/* Chips/tags row, including Bitly as a chip */}
-                    <div className="flex flex-wrap gap-1 mt-1 items-center">
-                      {entry.source && (
-                        <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-full">Source: {entry.source}</span>
+                {/* Top row: UTM, Bitly, tags */}
+                <div className="flex flex-wrap gap-2 items-center mb-1">
+                  {/* UTM Link chip */}
+                  <button
+                    className="inline-flex items-center gap-1 bg-blue-50 border border-blue-400 px-3 py-1 rounded-full min-w-0 flex-nowrap hover:bg-blue-100 transition relative max-w-xs truncate shadow-sm"
+                    title="Copy UTM link"
+                    onClick={() => handleCopyHistory(entry.url, entry.id)}
+                    style={{ lineHeight: 1 }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" strokeWidth="2" fill="none"/><rect x="3" y="3" width="13" height="13" rx="2" ry="2" stroke="currentColor" strokeWidth="2" fill="none"/></svg>
+                    <span style={{ color: '#2563eb', fontWeight: 600, fontSize: '0.92rem', lineHeight: '1.2', maxWidth: 140, display: 'inline-block', verticalAlign: 'middle', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.url ? (entry.url.length > 36 ? entry.url.slice(0, 36) + '…' : entry.url) : '(empty)'}</span>
+                    {copiedHistoryId === entry.id && (
+                      <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs rounded px-2 py-0.5 shadow">Copied!</span>
+                    )}
+                  </button>
+                  {/* Bitly chip */}
+                  {entry.bitly_url && (
+                    <button
+                      className="inline-flex items-center gap-1 bg-orange-50 border border-[#ee6123] px-3 py-1 rounded-full min-w-0 flex-nowrap hover:bg-orange-100 transition relative shadow-sm"
+                      title="Copy shortlink"
+                      onClick={() => handleCopyHistory(entry.bitly_url!, entry.id + '-bitly')}
+                      style={{ lineHeight: 1 }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-4 w-4 flex-shrink-0" fill="#ee6123"><path d="M23.6 8.4c-2.1-2.1-5.5-2.1-7.6 0l-6.2 6.2c-2.1 2.1-2.1 5.5 0 7.6 2.1 2.1 5.5 2.1 7.6 0l1.2-1.2c.4-.4.4-1 0-1.4s-1-.4-1.4 0l-1.2 1.2c-1.3 1.3-3.3 1.3-4.6 0-1.3-1.3-1.3-3.3 0-4.6l6.2-6.2c1.3-1.3 3.3-1.3 4.6 0 1.3 1.3 1.3 3.3 0 4.6l-.7.7c-.4.4-.4 1 0 1.4.4.4 1 .4 1.4 0l.7-.7c2.1-2.1 2.1-5.5 0-7.6z"/></svg>
+                      <span style={{ color: '#ee6123', fontWeight: 600, fontSize: '0.92rem', lineHeight: '1.2', display: 'inline-block', verticalAlign: 'middle' }}>Bitly</span>
+                      {copiedHistoryId === entry.id + '-bitly' && (
+                        <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#ee6123] text-white text-xs rounded px-2 py-0.5 shadow">Copied!</span>
                       )}
-                      {entry.medium && (
-                        <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded-full">Medium: {entry.medium}</span>
-                      )}
-                      {entry.campaign && (
-                        <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-0.5 rounded-full">Campaign: {entry.campaign}</span>
-                      )}
-                      {entry.term && (
-                        <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-0.5 rounded-full">Term: {entry.term}</span>
-                      )}
-                      {entry.content && (
-                        <span className="bg-pink-100 text-pink-800 text-xs font-semibold px-2 py-0.5 rounded-full">Content: {entry.content}</span>
-                      )}
-                      {entry.bitly_url && (
-                        <button
-                          className="inline-flex items-center gap-1 bg-orange-50 border border-[#ee6123] px-2 py-0.5 rounded-full min-w-0 flex-nowrap hover:bg-orange-100 transition relative"
-                          title="Copy shortlink"
-                          onClick={() => handleCopyHistory(entry.bitly_url!, entry.id + '-bitly')}
-                          style={{ lineHeight: 0 }}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-4 w-4 flex-shrink-0" fill="#ee6123"><path d="M23.6 8.4c-2.1-2.1-5.5-2.1-7.6 0l-6.2 6.2c-2.1 2.1-2.1 5.5 0 7.6 2.1 2.1 5.5 2.1 7.6 0l1.2-1.2c.4-.4.4-1 0-1.4s-1-.4-1.4 0l-1.2 1.2c-1.3 1.3-3.3 1.3-4.6 0-1.3-1.3-1.3-3.3 0-4.6l6.2-6.2c1.3-1.3 3.3-1.3 4.6 0 1.3 1.3 1.3 3.3 0 4.6l-.7.7c-.4.4-.4 1 0 1.4.4.4 1 .4 1.4 0l.7-.7c2.1-2.1 2.1-5.5 0-7.6z"/></svg>
-                          <span style={{ color: '#ee6123', fontWeight: 600, fontSize: '1rem', lineHeight: '1.2', maxWidth: 160, display: 'inline-block', verticalAlign: 'middle' }}>{entry.bitly_url || '(empty)'}</span>
-                          {copiedHistoryId === entry.id + '-bitly' && (
-                            <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#ee6123] text-white text-xs rounded px-2 py-0.5 shadow">Copied!</span>
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1 min-w-fit">
-                    <p className="text-xs text-gray-500 whitespace-nowrap">{new Date(entry.timestamp).toLocaleString()}</p>
-                    <div className="flex gap-2">
-                      <button
-                        className="text-red-500 text-sm font-bold px-3 py-1.5 rounded-full hover:bg-red-50 transition shadow"
-                        onClick={() => deleteFromHistory(entry.id)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
+                    </button>
+                  )}
+                  {/* Tags row */}
+                  {entry.source && (
+                    <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-full">Source: {entry.source}</span>
+                  )}
+                  {entry.medium && (
+                    <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded-full">Medium: {entry.medium}</span>
+                  )}
+                  {entry.campaign && (
+                    <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-0.5 rounded-full">Campaign: {entry.campaign}</span>
+                  )}
+                  {entry.term && (
+                    <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-0.5 rounded-full">Term: {entry.term}</span>
+                  )}
+                  {entry.content && (
+                    <span className="bg-pink-100 text-pink-800 text-xs font-semibold px-2 py-0.5 rounded-full">Content: {entry.content}</span>
+                  )}
+                </div>
+                {/* Bottom row: timestamp and delete */}
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-gray-400 font-medium">{new Date(entry.timestamp).toLocaleString()}</span>
+                  <button
+                    className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-red-500 text-xs font-bold px-3 py-1 rounded-full hover:bg-red-50 shadow-sm"
+                    onClick={() => deleteFromHistory(entry.id)}
+                    style={{ fontSize: '0.95rem' }}
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             ))}
