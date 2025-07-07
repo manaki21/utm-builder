@@ -458,7 +458,18 @@ export default function Page() {
           </div>
         </div>
         <div className="w-full lg:w-1/2 bg-white rounded-2xl shadow-2xl p-8 border border-gray-100 mt-10 lg:mt-0 h-fit">
-          <h2 className="text-2xl font-comfortaa text-purple-700 leading-tight mb-4">History</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-comfortaa text-purple-700 leading-tight">History</h2>
+            <button
+              className="flex items-center gap-1 px-3 py-1.5 border border-green-500 text-green-700 bg-white rounded-full text-sm font-medium shadow-sm hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-300 transition"
+              onClick={handleExportExcel}
+              type="button"
+              title="Export to Excel"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+              Export
+            </button>
+          </div>
           <div className="flex flex-wrap gap-2 items-center bg-purple-50 border border-purple-100 rounded-xl px-4 py-3 mb-4">
             <span className="text-sm text-purple-700 font-semibold mr-2">Sort/Filter by:</span>
             <select
@@ -525,15 +536,6 @@ export default function Page() {
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
-          <div className="flex justify-end mb-2">
-            <button
-              className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold shadow hover:bg-green-700 transition"
-              onClick={handleExportExcel}
-              type="button"
-            >
-              Export to Excel
-            </button>
-          </div>
           <div className="space-y-3">
             {filteredHistory.length === 0 && (
               <div className="text-center text-gray-400 py-8 bg-white rounded-lg shadow-inner text-base">No history found.</div>
