@@ -347,6 +347,18 @@ export default function Page() {
           {latestLabel}
         </div>
       )}
+      {/* After the tutorial banner, add a floating 'Need Help?' button if the tutorial is dismissed */}
+      {!showTutorial && (
+        <button
+          className="fixed top-6 right-6 z-50 bg-purple-600 text-white rounded-full shadow-lg p-2 flex items-center justify-center hover:bg-purple-700 focus:outline-none group transition"
+          style={{ boxShadow: '0 2px 8px rgba(80,0,120,0.12)' }}
+          onClick={() => setShowTutorial(true)}
+          title="Show tutorial"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10a4 4 0 118 0c0 2-2 3-2 3m-2 4h.01" /></svg>
+          <span className="absolute top-10 right-0 bg-white text-purple-700 text-xs rounded shadow px-2 py-1 opacity-0 group-hover:opacity-100 transition pointer-events-none">Need Help?</span>
+        </button>
+      )}
       <div className="flex flex-col lg:flex-row gap-8 w-full max-w-6xl">
         <div className="w-full lg:w-1/2 bg-white rounded-2xl shadow-2xl p-8 border border-gray-100 lg:max-h-[90vh] lg:overflow-auto">
           <div className="flex justify-center mb-1">
