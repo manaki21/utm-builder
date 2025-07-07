@@ -300,8 +300,48 @@ export default function Page() {
     XLSX.writeFile(workbook, 'utm-history.xlsx');
   };
 
+  const [showTutorial, setShowTutorial] = useState(true);
+
+  useEffect(() => {
+    const tut = typeof window !== 'undefined' ? localStorage.getItem('utmTutorialDismissed') : null;
+    if (tut === '1') setShowTutorial(false);
+  }, []);
+  const handleDismissTutorial = () => {
+    setShowTutorial(false);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('utmTutorialDismissed', '1');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100 flex flex-col items-center justify-center py-8 px-2">
+      {showTutorial && (
+        <div className="w-full max-w-3xl mx-auto mb-6 bg-gradient-to-r from-blue-100 via-purple-50 to-pink-100 border border-purple-200 rounded-xl shadow-lg p-5 flex flex-col gap-3 relative animate-fade-in">
+          <button
+            className="absolute top-2 right-2 text-gray-400 hover:text-purple-600 text-xl font-bold focus:outline-none"
+            onClick={handleDismissTutorial}
+            title="Dismiss tutorial"
+          >
+            ×
+          </button>
+          <div className="flex items-center gap-3">
+            <svg className="h-7 w-7 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <h2 className="text-xl font-bold text-purple-700">Welcome to the UTM Link Builder!</h2>
+          </div>
+          <ul className="list-disc pl-7 text-base text-gray-700 space-y-1">
+            <li><b>Enter your base URL</b> (e.g. https://example.com) and select <b>Source</b>, <b>Medium</b>, and (optionally) <b>Campaign</b>.</li>
+            <li>Click <b>Save</b> to add the generated UTM link to your <b>shared team history</b>.</li>
+            <li>Use the <b>+ Add advanced UTM fields</b> to add <b>Term</b> and <b>Content</b> if needed.</li>
+            <li>Filter, search, and sort your history. <b>Export</b> your filtered results to Excel anytime.</li>
+            <li>All changes are <b>shared instantly</b> with your team.</li>
+          </ul>
+          <div className="flex gap-2 mt-2 text-sm text-gray-500">
+            <span className="flex items-center gap-1"><svg className="h-4 w-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-3-3v6" /></svg>Click <b>+</b> for advanced fields</span>
+            <span className="flex items-center gap-1"><svg className="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 01-8 0" /></svg>Export to Excel with the top-right button</span>
+            <span className="flex items-center gap-1"><svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>Dismiss this tutorial anytime</span>
+          </div>
+        </div>
+      )}
       {latestLabel && (
         <div className="mb-4 text-center text-xs text-gray-500 font-semibold tracking-wide">
           {latestLabel}
