@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import Image from 'next/image';
+import * as XLSX from 'xlsx';
 
 type HistoryEntry = {
   id: string;
@@ -281,6 +282,24 @@ export default function Page() {
     latestLabel = `Version: ${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()}`;
   }
 
+  // Add export to Excel function
+  const handleExportExcel = () => {
+    // Prepare data for export (all visible fields)
+    const exportData = filteredHistory.map(entry => ({
+      URL: entry.url,
+      Source: entry.source || '',
+      Medium: entry.medium || '',
+      Campaign: entry.campaign || '',
+      Term: entry.term || '',
+      Content: entry.content || '',
+      Timestamp: entry.timestamp
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'UTM History');
+    XLSX.writeFile(workbook, 'utm-history.xlsx');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100 flex flex-col items-center justify-center py-8 px-2">
       {latestLabel && (
@@ -506,6 +525,15 @@ export default function Page() {
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
+          <div className="flex justify-end mb-2">
+            <button
+              className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold shadow hover:bg-green-700 transition"
+              onClick={handleExportExcel}
+              type="button"
+            >
+              Export to Excel
+            </button>
+          </div>
           <div className="space-y-3">
             {filteredHistory.length === 0 && (
               <div className="text-center text-gray-400 py-8 bg-white rounded-lg shadow-inner text-base">No history found.</div>
