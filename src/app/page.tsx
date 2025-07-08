@@ -484,6 +484,42 @@ export default function Page() {
     };
   }, [showAnalyticsModal]);
 
+  // Close custom source dropdown on outside click
+  const sourceDropdownRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (sourceDropdownRef.current && !sourceDropdownRef.current.contains(event.target as Node)) {
+        setShowCustomSourceInput(false);
+      }
+    }
+    if (showCustomSourceInput) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCustomSourceInput]);
+
+  // Close custom medium dropdown on outside click
+  const mediumDropdownRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (mediumDropdownRef.current && !mediumDropdownRef.current.contains(event.target as Node)) {
+        setShowCustomMediumInput(false);
+      }
+    }
+    if (showCustomMediumInput) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCustomMediumInput]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100 flex flex-col lg:flex-row items-start justify-center py-4 sm:py-8 px-1 sm:px-2 gap-4 lg:gap-8 relative mt-20 sm:mt-24">
       {/* Add a top header bar */}
@@ -559,11 +595,11 @@ export default function Page() {
             onChange={e => setBaseURL(e.target.value)}
           />
           <div className="space-y-2 sm:space-y-3">
-            <div className="relative">
+            <div className="relative" ref={sourceDropdownRef}>
               <button
                 className={`w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-gray-900 text-base text-left flex items-center justify-between ${step === 2 ? 'focus-pulse border-purple-500' : ''}`}
                 type="button"
-                onClick={() => setShowCustomSourceInput(false)}
+                onClick={() => setShowCustomSourceInput(v => !v)}
                 aria-haspopup="listbox"
                 aria-expanded={showCustomSourceInput ? 'true' : 'false'}
               >
@@ -618,11 +654,11 @@ export default function Page() {
                 >Cancel</button>
               </div>
             )}
-            <div className="relative">
+            <div className="relative" ref={mediumDropdownRef}>
               <button
                 className={`w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-gray-900 text-base text-left flex items-center justify-between ${step === 3 ? 'focus-pulse border-purple-500' : ''}`}
                 type="button"
-                onClick={() => setShowCustomMediumInput(false)}
+                onClick={() => setShowCustomMediumInput(v => !v)}
                 aria-haspopup="listbox"
                 aria-expanded={showCustomMediumInput ? 'true' : 'false'}
               >
