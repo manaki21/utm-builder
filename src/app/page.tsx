@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import Image from 'next/image';
 import * as XLSX from 'xlsx';
@@ -476,6 +476,32 @@ export default function Page() {
   const [copied, setCopied] = useState(false);
   const [copiedHistoryId, setCopiedHistoryId] = useState<string | null>(null);
 
+  // Bitly Analytics Modal state
+  const [showAnalyticsModal, setShowAnalyticsModal] = useState(false);
+  const [analyticsBitlyUrl, setAnalyticsBitlyUrl] = useState<string | null>(null);
+  const analyticsModalRef = useRef<HTMLDivElement>(null);
+
+  // Close modal on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        analyticsModalRef.current &&
+        !analyticsModalRef.current.contains(event.target as Node)
+      ) {
+        setShowAnalyticsModal(false);
+        setAnalyticsBitlyUrl(null);
+      }
+    }
+    if (showAnalyticsModal) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showAnalyticsModal]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100 flex flex-col lg:flex-row items-start justify-center py-4 sm:py-8 px-1 sm:px-2 gap-4 lg:gap-8 relative mt-20 sm:mt-24">
       {/* Add a top header bar */}
@@ -811,31 +837,46 @@ export default function Page() {
                     </div>
                   </td>
                   {/* Bitly Link */}
-                  <td className="px-2 sm:px-3 py-2 align-middle max-w-[100px] sm:max-w-[180px] whitespace-nowrap">
+                  <td className="px-2 sm:px-3 py-2 align-middle max-w-[180px] sm:max-w-[260px] whitespace-nowrap">
                     {entry.bitly_url && (
-                      <div className="flex items-center gap-1 sm:gap-2">
+                      <div className="flex flex-col gap-1 relative">
                         <a
                           href={entry.bitly_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[#ee6123] font-semibold hover:underline max-w-[80px] sm:max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap"
+                          className="text-[#ee6123] font-semibold hover:underline break-all sm:break-normal sm:whitespace-nowrap"
                           title={entry.bitly_url}
                           style={{ display: 'inline-block', verticalAlign: 'middle' }}
                         >
                           {entry.bitly_url}
                         </a>
-                        <button
-                          className="inline-flex items-center gap-1 bg-orange-50 border border-[#ee6123] px-1 sm:px-2 py-0.5 rounded-full hover:bg-orange-100 transition text-[#ee6123] font-semibold text-[11px] sm:text-xs"
-                          title="Copy shortlink"
-                          onClick={() => handleCopyHistory(entry.bitly_url!, entry.id + '-bitly')}
-                          style={{ lineHeight: 1 }}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" fill="#ee6123"><path d="M23.6 8.4c-2.1-2.1-5.5-2.1-7.6 0l-6.2 6.2c-2.1 2.1-2.1 5.5 0 7.6 2.1 2.1 5.5 2.1 7.6 0l1.2-1.2c.4-.4.4-1 0-1.4s-1-.4-1.4 0l-1.2 1.2c-1.3 1.3-3.3 1.3-4.6 0-1.3-1.3-1.3-3.3 0-4.6l6.2-6.2c1.3-1.3 3.3-1.3 4.6 0 1.3 1.3 1.3 3.3 0 4.6l-.7.7c-.4.4-.4 1 0 1.4.4.4 1 .4 1.4 0l.7-.7c2.1-2.1 2.1-5.5 0-7.6z"/></svg>
-                          Copy
-                          {copiedHistoryId === entry.id + '-bitly' && (
-                            <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#ee6123] text-white text-xs rounded px-2 py-0.5 shadow">Copied!</span>
-                          )}
-                        </button>
+                        <div className="flex flex-row gap-1 sm:gap-2">
+                          <button
+                            className="inline-flex items-center gap-1 bg-orange-50 border border-[#ee6123] px-1 sm:px-2 py-0.5 rounded-full hover:bg-orange-100 transition text-[#ee6123] font-semibold text-[10px] sm:text-xs"
+                            title="Copy shortlink"
+                            onClick={() => handleCopyHistory(entry.bitly_url!, entry.id + '-bitly')}
+                            style={{ lineHeight: 1 }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" fill="#ee6123"><path d="M23.6 8.4c-2.1-2.1-5.5-2.1-7.6 0l-6.2 6.2c-2.1 2.1-2.1 5.5 0 7.6 2.1 2.1 5.5 2.1 7.6 0l1.2-1.2c.4-.4.4-1 0-1.4s-1-.4-1.4 0l-1.2 1.2c-1.3 1.3-3.3 1.3-4.6 0-1.3-1.3-1.3-3.3 0-4.6l6.2-6.2c1.3-1.3 3.3-1.3 4.6 0 1.3 1.3 1.3 3.3 0 4.6l-.7.7c-.4.4-.4 1 0 1.4.4.4 1 .4 1.4 0l.7-.7c2.1-2.1 2.1-5.5 0-7.6z"/></svg>
+                            Copy
+                            {copiedHistoryId === entry.id + '-bitly' && (
+                              <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#ee6123] text-white text-xs rounded px-2 py-0.5 shadow">Copied!</span>
+                            )}
+                          </button>
+                          {/* Analytics Button */}
+                          <button
+                            className="px-1 py-0.5 rounded-full border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 text-[10px] sm:text-xs font-semibold flex items-center gap-1 transition"
+                            title="View Bitly Analytics"
+                            onClick={() => {
+                              setAnalyticsBitlyUrl(entry.bitly_url!);
+                              setShowAnalyticsModal(true);
+                            }}
+                            style={{ lineHeight: 1 }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 20c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z" /></svg>
+                            Analytics
+                          </button>
+                        </div>
                       </div>
                     )}
                   </td>
@@ -887,6 +928,23 @@ export default function Page() {
           </div>
         )}
       </div>
+      {/* Bitly Analytics Modal */}
+      {showAnalyticsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm px-2">
+          <div ref={analyticsModalRef} className="w-full max-w-xs sm:max-w-md mx-auto bg-white border border-purple-200 rounded-2xl shadow-2xl p-6 flex flex-col gap-3 relative animate-fade-in">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-purple-600 text-xl font-bold focus:outline-none"
+              onClick={() => { setShowAnalyticsModal(false); setAnalyticsBitlyUrl(null); }}
+              title="Close analytics"
+            >
+              ×
+            </button>
+            <h3 className="text-lg font-bold text-purple-700 mb-2">Bitly Analytics</h3>
+            <div className="text-sm text-gray-700">Analytics for:<br /><span className="break-all text-blue-700 font-mono">{analyticsBitlyUrl}</span></div>
+            <div className="flex items-center justify-center min-h-[60px] text-gray-400">(Analytics will appear here)</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
