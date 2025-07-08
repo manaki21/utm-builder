@@ -309,17 +309,6 @@ export default function Page() {
     return 0;
   });
 
-  // Get unique months for month filter
-  const monthOptions = Array.from(new Set(history.map(h => {
-    const d = new Date(h.timestamp);
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-  })));
-  // Get unique values for sort/filter fields
-  const sourceOptions = Array.from(new Set(history.map(h => h.source).filter(Boolean)));
-  const mediumOptions = Array.from(new Set(history.map(h => h.medium).filter(Boolean)));
-  const campaignOptions = Array.from(new Set(history.map(h => h.campaign).filter(Boolean)));
-  const urlOptions = Array.from(new Set(history.map(h => getBaseUrl(h.url)).filter(Boolean)));
-
   const handleCopy = () => {
     if (generatedURL) {
       navigator.clipboard.writeText(generatedURL);
