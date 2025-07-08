@@ -48,13 +48,29 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  if (req.nextUrl.searchParams.get('all')) {
-    const { data, error } = await supabase
-      .from('utm_shortlinks')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json(data);
+  const { searchParams } = new URL(req.url);
+  if (searchParams.get('analytics') === '1' && searchParams.get('bitlink')) {
+    const bitlink = searchParams.get('bitlink');
+    const bitlyToken = process.env.BITLY_TOKEN;
+    if (!bitlyToken) {
+      return NextResponse.json({ error: 'Bitly token not configured' }, { status: 500 });
+    }
+    try {
+      const res = await fetch(`https://api-ssl.bitly.com/v4/bitlinks/${bitlink}/clicks/summary`, {
+        headers: {
+          'Authorization': `Bearer ${bitlyToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        return NextResponse.json({ error: err.message || 'Failed to fetch analytics' }, { status: 500 });
+      }
+      const data = await res.json();
+      return NextResponse.json({ total_clicks: data.total_clicks, ...data });
+    } catch (e) {
+      return NextResponse.json({ error: 'Error fetching analytics' }, { status: 500 });
+    }
   }
-  return NextResponse.json({ error: 'Not implemented' }, { status: 400 });
+  return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
 } 

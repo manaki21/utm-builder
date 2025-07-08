@@ -487,6 +487,11 @@ export default function Page() {
   // Add state for Bitly loading per row
   const [bitlyLoadingId, setBitlyLoadingId] = useState<string | null>(null);
 
+  // Add state for analytics data
+  const [analyticsData, setAnalyticsData] = useState<{ total_clicks?: number; [key: string]: any } | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
+
   // Bitly Analytics Modal state
   const [showAnalyticsModal, setShowAnalyticsModal] = useState(false);
   const [analyticsBitlyUrl, setAnalyticsBitlyUrl] = useState<string | null>(null);
@@ -512,6 +517,31 @@ export default function Page() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showAnalyticsModal]);
+
+  // Fetch analytics when modal opens
+  useEffect(() => {
+    async function fetchAnalytics() {
+      if (!showAnalyticsModal || !analyticsBitlyUrl) return;
+      setAnalyticsLoading(true);
+      setAnalyticsError(null);
+      setAnalyticsData(null);
+      try {
+        const bitlink = analyticsBitlyUrl.replace(/^https?:\/\//, '');
+        const res = await fetch(`/api/bitly?analytics=1&bitlink=${encodeURIComponent(bitlink)}`);
+        const data = await res.json();
+        if (res.ok) {
+          setAnalyticsData(data);
+        } else {
+          setAnalyticsError(data.error || 'Failed to fetch analytics');
+        }
+      } catch (e) {
+        setAnalyticsError('Error fetching analytics');
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    }
+    fetchAnalytics();
+  }, [showAnalyticsModal, analyticsBitlyUrl]);
 
   // Close custom source dropdown on outside click
   const sourceDropdownRef = useRef<HTMLDivElement>(null);
@@ -1102,16 +1132,19 @@ export default function Page() {
             </button>
             <h3 className="text-lg font-bold text-purple-700 mb-2">Bitly Analytics</h3>
             <div className="text-sm text-gray-700">Analytics for:<br /><span className="break-all text-blue-700 font-mono">{analyticsBitlyUrl}</span></div>
-            <div className="flex items-center justify-center min-h-[60px] text-gray-400">
-              {analyticsBitlyUrl ? (
-                (() => {
-                  const entry = history.find(h => h.bitly_url === analyticsBitlyUrl);
-                  if (entry && entry.qr_code_url) {
-                    return <img src={entry.qr_code_url} alt="Bitly QR Code" className="w-24 h-24 object-contain mx-auto rounded-lg border border-gray-200 bg-gray-50" />;
-                  }
-                  return <span>(Analytics will appear here)</span>;
-                })()
-              ) : <span>(Analytics will appear here)</span>}
+            <div className="flex flex-col items-center justify-center min-h-[60px] text-gray-700">
+              {analyticsLoading ? (
+                <span>Loading analytics...</span>
+              ) : analyticsError ? (
+                <span className="text-red-500">{analyticsError}</span>
+              ) : analyticsData ? (
+                <>
+                  <div className="text-2xl font-bold text-blue-700 mb-2">{analyticsData.total_clicks ?? 0}</div>
+                  <div className="text-xs text-gray-500">Total Clicks</div>
+                </>
+              ) : (
+                <span>(Analytics will appear here)</span>
+              )}
             </div>
           </div>
         </div>
