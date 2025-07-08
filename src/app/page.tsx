@@ -238,17 +238,6 @@ export default function Page() {
     }
   };
 
-  // Helper to extract base URL (without UTM params)
-  function getBaseUrl(fullUrl: string) {
-    try {
-      const url = new URL(fullUrl);
-      url.search = '';
-      return url.toString().replace(/\/?$/, ''); // remove trailing slash for consistency
-    } catch {
-      return fullUrl;
-    }
-  }
-
   // Add state for search and sorting
   const [searchQuery, setSearchQuery] = useState('');
   const [sortColumn, setSortColumn] = useState('timestamp');
