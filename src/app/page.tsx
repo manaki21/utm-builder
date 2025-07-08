@@ -484,8 +484,6 @@ export default function Page() {
     };
   }, [showAnalyticsModal]);
 
-  const currentEntry = history.find(h => h.url === generatedURL);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100 flex flex-col lg:flex-row items-start justify-center py-4 sm:py-8 px-1 sm:px-2 gap-4 lg:gap-8 relative mt-20 sm:mt-24">
       {/* Add a top header bar */}
