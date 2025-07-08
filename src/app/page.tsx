@@ -484,11 +484,7 @@ export default function Page() {
     };
   }, [showAnalyticsModal]);
 
-  // For builder QR button
   const currentEntry = history.find(h => h.url === generatedURL);
-  const currentBitly = currentEntry?.bitly_url;
-  const currentQR = currentEntry?.qr_code_url;
-  const [qrCreateLoading, setQRCreateLoading] = useState(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100 flex flex-col lg:flex-row items-start justify-center py-4 sm:py-8 px-1 sm:px-2 gap-4 lg:gap-8 relative mt-20 sm:mt-24">
