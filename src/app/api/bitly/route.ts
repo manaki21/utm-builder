@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
       }
       const data = await res.json();
       return NextResponse.json({ total_clicks: data.total_clicks, ...data });
-    } catch (e) {
+    } catch {
       return NextResponse.json({ error: 'Error fetching analytics' }, { status: 500 });
     }
   }

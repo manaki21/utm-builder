@@ -488,7 +488,8 @@ export default function Page() {
   const [bitlyLoadingId, setBitlyLoadingId] = useState<string | null>(null);
 
   // Add state for analytics data
-  const [analyticsData, setAnalyticsData] = useState<{ total_clicks?: number; [key: string]: any } | null>(null);
+  type AnalyticsData = { total_clicks?: number; [key: string]: unknown };
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
 
@@ -534,7 +535,7 @@ export default function Page() {
         } else {
           setAnalyticsError(data.error || 'Failed to fetch analytics');
         }
-      } catch (e) {
+      } catch {
         setAnalyticsError('Error fetching analytics');
       } finally {
         setAnalyticsLoading(false);
