@@ -476,6 +476,9 @@ export default function Page() {
   const [copied, setCopied] = useState(false);
   const [copiedHistoryId, setCopiedHistoryId] = useState<string | null>(null);
 
+  // Add state for Bitly loading per row
+  const [bitlyLoadingId, setBitlyLoadingId] = useState<string | null>(null);
+
   // Bitly Analytics Modal state
   const [showAnalyticsModal, setShowAnalyticsModal] = useState(false);
   const [analyticsBitlyUrl, setAnalyticsBitlyUrl] = useState<string | null>(null);
@@ -838,7 +841,7 @@ export default function Page() {
                   </td>
                   {/* Bitly Link */}
                   <td className="px-2 sm:px-3 py-2 align-middle max-w-[180px] sm:max-w-[260px] whitespace-nowrap">
-                    {entry.bitly_url && (
+                    {entry.bitly_url ? (
                       <div className="flex flex-col gap-1 relative">
                         <a
                           href={entry.bitly_url}
@@ -877,6 +880,47 @@ export default function Page() {
                             Analytics
                           </button>
                         </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-1 relative">
+                        <button
+                          className="inline-flex items-center gap-1 bg-orange-50 border border-[#ee6123] px-2 py-1 rounded-full hover:bg-orange-100 transition text-[#ee6123] font-semibold text-xs disabled:opacity-60 disabled:cursor-not-allowed"
+                          title="Shorten with Bitly"
+                          disabled={bitlyLoadingId === entry.id}
+                          onClick={async () => {
+                            setBitlyLoadingId(entry.id);
+                            // Call Bitly API for this UTM link
+                            const res = await fetch('/api/bitly', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ utm_url: entry.url })
+                            });
+                            const data = await res.json();
+                            setBitlyLoadingId(null);
+                            if (data.bitly_url) {
+                              // Update in Supabase
+                              await fetch('/api/history', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ ...entry, bitly_url: data.bitly_url })
+                              });
+                              // Update in local state
+                              setHistory(prev => prev.map(h => h.id === entry.id ? { ...h, bitly_url: data.bitly_url } : h));
+                            } else {
+                              // Optionally show error/duplicate message
+                              // (You can add a toast or inline message here)
+                            }
+                          }}
+                        >
+                          {bitlyLoadingId === entry.id ? (
+                            <svg className="animate-spin h-4 w-4 text-[#ee6123]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="#ee6123" strokeWidth="4"></circle><path className="opacity-75" fill="#ee6123" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                          ) : (
+                            <>
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-4 w-4 flex-shrink-0" fill="#ee6123"><path d="M23.6 8.4c-2.1-2.1-5.5-2.1-7.6 0l-6.2 6.2c-2.1 2.1-2.1 5.5 0 7.6 2.1 2.1 5.5 2.1 7.6 0l1.2-1.2c.4-.4.4-1 0-1.4s-1-.4-1.4 0l-1.2 1.2c-1.3 1.3-3.3 1.3-4.6 0-1.3-1.3-1.3-3.3 0-4.6l6.2-6.2c1.3-1.3 3.3-1.3 4.6 0 1.3 1.3 1.3 3.3 0 4.6l-.7.7c-.4.4-.4 1 0 1.4.4.4 1 .4 1.4 0l.7-.7c2.1-2.1 2.1-5.5 0-7.6z"/></svg>
+                              Shorten with Bitly
+                            </>
+                          )}
+                        </button>
                       </div>
                     )}
                   </td>
