@@ -552,7 +552,7 @@ export default function Page() {
         if (!qrRes.ok) throw new Error('Failed to fetch QR code');
         const blob = await qrRes.blob();
         setQRImageUrl(URL.createObjectURL(blob));
-      } catch (err) {
+      } catch {
         setQRError('Could not load QR code.');
       } finally {
         setQRLoading(false);
