@@ -560,37 +560,43 @@ export default function Page() {
           />
           <div className="space-y-2 sm:space-y-3">
             <div className="relative">
-              <select
-                className={`w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-gray-900 text-base ${step === 2 ? 'focus-pulse border-purple-500' : ''}`}
-                value={showCustomSourceInput ? 'custom' : source}
-                onChange={e => {
-                  if (e.target.value === 'custom') {
-                    setShowCustomSourceInput(true);
-                  } else {
-                    setSource(e.target.value);
-                  }
-                }}
+              <button
+                className={`w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-gray-900 text-base text-left flex items-center justify-between ${step === 2 ? 'focus-pulse border-purple-500' : ''}`}
+                type="button"
+                onClick={() => setShowCustomSourceInput(false)}
+                aria-haspopup="listbox"
+                aria-expanded={showCustomSourceInput ? 'true' : 'false'}
               >
-                <option value="">Select Source</option>
-                {allSources.map(src => <option key={src} value={src}>{src}</option>)}
-                <option value="custom">Add custom…</option>
-              </select>
-              {/* Custom sources delete buttons */}
-              {customSources.length > 0 && (
-                <div className="absolute right-0 top-0 mt-2 mr-2 flex flex-col gap-1 z-10">
-                  {customSources.sort((a, b) => a.localeCompare(b)).map(cs => (
-                    <button
-                      key={cs}
-                      className="text-xs text-red-500 bg-white border border-red-200 rounded px-2 py-0.5 hover:bg-red-50 ml-1"
-                      title={`Remove custom source '${cs}'`}
-                      onClick={() => setCustomSources(prev => prev.filter(s => s !== cs))}
-                      type="button"
-                    >
-                      Remove {cs}
-                    </button>
+                {source || 'Select Source'}
+                <svg className="w-4 h-4 ml-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </button>
+              <div className="absolute left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-20 max-h-60 overflow-y-auto" style={{ display: showCustomSourceInput ? 'block' : 'none' }}>
+                <div className="py-1">
+                  <button className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50" onClick={() => { setSource(''); setShowCustomSourceInput(false); }}>Select Source</button>
+                  {allSources.map(src => (
+                    <div key={src} className="flex items-center group">
+                      <button
+                        className={`flex-1 text-left px-4 py-2 ${source === src ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-700 hover:bg-blue-50'}`}
+                        onClick={() => { setSource(src); setShowCustomSourceInput(false); }}
+                        type="button"
+                      >
+                        {src}
+                      </button>
+                      {customSources.includes(src) && (
+                        <button
+                          className="px-2 py-2 text-red-400 hover:text-red-600 focus:outline-none bg-transparent"
+                          title={`Remove custom source '${src}'`}
+                          onClick={() => setCustomSources(prev => prev.filter(s => s !== src))}
+                          type="button"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
                   ))}
+                  <button className="w-full text-left px-4 py-2 text-purple-600 hover:bg-purple-50 font-semibold" onClick={() => setShowCustomSourceInput(true)}>Add custom…</button>
                 </div>
-              )}
+              </div>
             </div>
             {showCustomSourceInput && (
               <div className="flex mt-2 gap-2">
@@ -613,37 +619,43 @@ export default function Page() {
               </div>
             )}
             <div className="relative">
-              <select
-                className={`w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-gray-900 text-base ${step === 3 ? 'focus-pulse border-purple-500' : ''}`}
-                value={showCustomMediumInput ? 'custom' : medium}
-                onChange={e => {
-                  if (e.target.value === 'custom') {
-                    setShowCustomMediumInput(true);
-                  } else {
-                    setMedium(e.target.value);
-                  }
-                }}
+              <button
+                className={`w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-gray-900 text-base text-left flex items-center justify-between ${step === 3 ? 'focus-pulse border-purple-500' : ''}`}
+                type="button"
+                onClick={() => setShowCustomMediumInput(false)}
+                aria-haspopup="listbox"
+                aria-expanded={showCustomMediumInput ? 'true' : 'false'}
               >
-                <option value="">Select Medium</option>
-                {allMediums.map(med => <option key={med} value={med}>{med}</option>)}
-                <option value="custom">Add custom…</option>
-              </select>
-              {/* Custom mediums delete buttons */}
-              {customMediums.length > 0 && (
-                <div className="absolute right-0 top-0 mt-2 mr-2 flex flex-col gap-1 z-10">
-                  {customMediums.sort((a, b) => a.localeCompare(b)).map(cm => (
-                    <button
-                      key={cm}
-                      className="text-xs text-red-500 bg-white border border-red-200 rounded px-2 py-0.5 hover:bg-red-50 ml-1"
-                      title={`Remove custom medium '${cm}'`}
-                      onClick={() => setCustomMediums(prev => prev.filter(m => m !== cm))}
-                      type="button"
-                    >
-                      Remove {cm}
-                    </button>
+                {medium || 'Select Medium'}
+                <svg className="w-4 h-4 ml-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </button>
+              <div className="absolute left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-20 max-h-60 overflow-y-auto" style={{ display: showCustomMediumInput ? 'block' : 'none' }}>
+                <div className="py-1">
+                  <button className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50" onClick={() => { setMedium(''); setShowCustomMediumInput(false); }}>Select Medium</button>
+                  {allMediums.map(med => (
+                    <div key={med} className="flex items-center group">
+                      <button
+                        className={`flex-1 text-left px-4 py-2 ${medium === med ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-700 hover:bg-blue-50'}`}
+                        onClick={() => { setMedium(med); setShowCustomMediumInput(false); }}
+                        type="button"
+                      >
+                        {med}
+                      </button>
+                      {customMediums.includes(med) && (
+                        <button
+                          className="px-2 py-2 text-red-400 hover:text-red-600 focus:outline-none bg-transparent"
+                          title={`Remove custom medium '${med}'`}
+                          onClick={() => setCustomMediums(prev => prev.filter(m => m !== med))}
+                          type="button"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
                   ))}
+                  <button className="w-full text-left px-4 py-2 text-purple-600 hover:bg-purple-50 font-semibold" onClick={() => setShowCustomMediumInput(true)}>Add custom…</button>
                 </div>
-              )}
+              </div>
             </div>
             {showCustomMediumInput && (
               <div className="flex mt-2 gap-2">
