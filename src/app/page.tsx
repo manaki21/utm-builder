@@ -484,62 +484,6 @@ export default function Page() {
     };
   }, [showAnalyticsModal]);
 
-  // Bitly QR Code Modal state
-  const [showQRModal, setShowQRModal] = useState(false);
-  const [qrBitlyUrl, setQRBitlyUrl] = useState<string | null>(null);
-  const [qrImageUrl, setQRImageUrl] = useState<string | null>(null);
-  const [qrLoading, setQRLoading] = useState(false);
-  const [qrError, setQRError] = useState<string | null>(null);
-  const qrModalRef = useRef<HTMLDivElement>(null);
-
-  // Close QR modal on outside click
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        qrModalRef.current &&
-        !qrModalRef.current.contains(event.target as Node)
-      ) {
-        setShowQRModal(false);
-        setQRBitlyUrl(null);
-        setQRImageUrl(null);
-        setQRError(null);
-      }
-    }
-    if (showQRModal) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showQRModal]);
-
-  // Fetch QR code when modal opens
-  useEffect(() => {
-    async function fetchQR() {
-      if (!qrBitlyUrl) return;
-      setQRLoading(true);
-      setQRError(null);
-      setQRImageUrl(null);
-      try {
-        // Bitly QR code endpoint: https://api-ssl.bitly.com/v4/bitlinks/{bitlink}/qr
-        // The bitlink must be in the form "bit.ly/abc123" (not the full https URL)
-        const bitlink = qrBitlyUrl.replace(/^https?:\/\//, '');
-        // You may need to proxy this through your own API route to avoid exposing your Bitly token
-        const qrRes = await fetch(`/api/bitly?qr=1&bitlink=${encodeURIComponent(bitlink)}`);
-        if (!qrRes.ok) throw new Error('Failed to fetch QR code');
-        const blob = await qrRes.blob();
-        setQRImageUrl(URL.createObjectURL(blob));
-      } catch {
-        setQRError('Could not load QR code.');
-      } finally {
-        setQRLoading(false);
-      }
-    }
-    if (showQRModal && qrBitlyUrl) fetchQR();
-  }, [showQRModal, qrBitlyUrl]);
-
   // For builder QR button
   const currentEntry = history.find(h => h.url === generatedURL);
   const currentBitly = currentEntry?.bitly_url;
@@ -759,47 +703,6 @@ export default function Page() {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
             Save
           </button>
-          {/* Generate QR button, only if Bitly link exists for current UTM */}
-          {currentBitly && !currentQR && (
-            <button
-              className="flex items-center gap-2 border border-purple-500 text-purple-700 px-4 py-1.5 rounded-full font-medium shadow-sm transition text-base hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-300 disabled:opacity-50 disabled:cursor-not-allowed h-10"
-              onClick={async () => {
-                setQRCreateLoading(true);
-                const res = await fetch('/api/bitly', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ create_qr: true, bitly_url: currentBitly })
-                });
-                const data = await res.json();
-                setQRCreateLoading(false);
-                if (data.qr_code_url) {
-                  setHistory(prev => prev.map(h => h.url === generatedURL ? { ...h, qr_code_url: data.qr_code_url } : h));
-                }
-              }}
-              disabled={qrCreateLoading}
-              title="Create QR code for this Bitly link"
-            >
-              {qrCreateLoading ? (
-                <svg className="animate-spin h-5 w-5 text-purple-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="#a78bfa" strokeWidth="4"></circle><path className="opacity-75" fill="#a78bfa" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h4v4H3V3zm0 14h4v4H3v-4zm14-14h4v4h-4V3zm0 14h4v4h-4v-4zM7 7h2v2H7V7zm8 0h2v2h-2V7zm-8 8h2v2H7v-2zm8 0h2v2h-2v-2z" /></svg>
-              )}
-              Create QR Code
-            </button>
-          )}
-          {currentBitly && currentQR && (
-            <button
-              className="flex items-center gap-2 border border-purple-500 text-purple-700 px-4 py-1.5 rounded-full font-medium shadow-sm transition text-base hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-300 disabled:opacity-50 disabled:cursor-not-allowed h-10"
-              onClick={() => {
-                setQRBitlyUrl(currentBitly);
-                setShowQRModal(true);
-              }}
-              title="Show QR code for this Bitly link"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h4v4H3V3zm0 14h4v4H3v-4zm14-14h4v4h-4V3zm0 14h4v4h-4v-4zM7 7h2v2H7V7zm8 0h2v2h-2V7zm-8 8h2v2H7v-2zm8 0h2v2h-2v-2z" /></svg>
-              Show QR Code
-            </button>
-          )}
         </div>
         {bitlyResult && bitlyResult.url && (
           <div className="flex justify-center mt-2">
@@ -862,7 +765,6 @@ export default function Page() {
                   { key: 'content', label: 'Content' },
                   { key: 'timestamp', label: 'Date' },
                   { key: 'actions', label: 'Actions', sortable: false },
-                  { key: 'qr', label: 'QR Code', sortable: false }, // <-- Rename header
                 ].map(col => (
                   <th
                     key={col.key}
@@ -1039,29 +941,6 @@ export default function Page() {
                       Delete
                     </button>
                   </td>
-                  {/* QR Code Column - always last */}
-                  <td className="px-2 sm:px-3 py-2 align-middle text-center">
-                    {entry.bitly_url ? (
-                      <button
-                        className="inline-flex items-center justify-center bg-purple-50 border border-purple-200 px-2 py-1 rounded-full hover:bg-purple-100 transition text-purple-700 font-semibold text-xs"
-                        title="Show QR code for this Bitly link"
-                        onClick={() => {
-                          setQRBitlyUrl(entry.bitly_url!);
-                          setShowQRModal(true);
-                        }}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h4v4H3V3zm0 14h4v4H3v-4zm14-14h4v4h-4V3zm0 14h4v4h-4v-4zM7 7h2v2H7V7zm8 0h2v2h-2V7zm-8 8h2v2H7v-2zm8 0h2v2h-2v-2z" /></svg>
-                      </button>
-                    ) : (
-                      <button
-                        className="inline-flex items-center justify-center bg-gray-100 border border-gray-200 px-2 py-1 rounded-full text-gray-400 font-semibold text-xs cursor-not-allowed"
-                        title="Create Bitly link first to get QR code"
-                        disabled
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h4v4H3V3zm0 14h4v4H3v-4zm14-14h4v4h-4V3zm0 14h4v4h-4v-4zM7 7h2v2H7V7zm8 0h2v2h-2V7zm-8 8h2v2H7v-2zm8 0h2v2h-2v-2z" /></svg>
-                      </button>
-                    )}
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -1102,71 +981,6 @@ export default function Page() {
                 })()
               ) : <span>(Analytics will appear here)</span>}
             </div>
-          </div>
-        </div>
-      )}
-      {/* Bitly QR Code Modal */}
-      {showQRModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm px-2">
-          <div ref={qrModalRef} className="w-full max-w-xs sm:max-w-md mx-auto bg-white border border-purple-200 rounded-2xl shadow-2xl p-6 flex flex-col gap-3 relative animate-fade-in">
-            <button
-              className="absolute top-2 right-2 text-gray-400 hover:text-purple-600 text-xl font-bold focus:outline-none"
-              onClick={() => { setShowQRModal(false); setQRBitlyUrl(null); setQRImageUrl(null); setQRError(null); }}
-              title="Close QR code"
-            >
-              ×
-            </button>
-            <h3 className="text-lg font-bold text-purple-700 mb-2">Bitly QR Code</h3>
-            <div className="text-sm text-gray-700 mb-2">For: <span className="break-all text-blue-700 font-mono">{qrBitlyUrl}</span></div>
-            <div className="flex items-center justify-center min-h-[120px]">
-              {qrLoading ? (
-                <svg className="animate-spin h-8 w-8 text-purple-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="#a78bfa" strokeWidth="4"></circle><path className="opacity-75" fill="#a78bfa" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-              ) : qrError ? (
-                <span className="text-red-500 text-sm">{qrError}</span>
-              ) : qrBitlyUrl ? (
-                (() => {
-                  const entry = history.find(h => h.bitly_url === qrBitlyUrl);
-                  if (entry && entry.qr_code_url) {
-                    return <img src={entry.qr_code_url} alt="Bitly QR Code" className="w-40 h-40 object-contain mx-auto rounded-lg border border-gray-200 bg-gray-50" />;
-                  } else {
-                    return <button
-                      className="px-4 py-2 bg-purple-500 text-white rounded-lg font-semibold hover:bg-purple-600 transition"
-                      onClick={async () => {
-                        setQRLoading(true);
-                        const res = await fetch('/api/bitly', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ create_qr: true, bitly_url: qrBitlyUrl })
-                        });
-                        const data = await res.json();
-                        setQRLoading(false);
-                        if (data.qr_code_url) {
-                          setHistory(prev => prev.map(h => h.bitly_url === qrBitlyUrl ? { ...h, qr_code_url: data.qr_code_url } : h));
-                        }
-                      }}
-                      disabled={qrLoading}
-                    >
-                      {qrLoading ? 'Creating...' : 'Create QR Code'}
-                    </button>;
-                  }
-                })()
-              ) : null}
-            </div>
-            {qrImageUrl && (
-              <button
-                className="mt-3 px-4 py-2 bg-purple-500 text-white rounded-lg font-semibold hover:bg-purple-600 transition"
-                onClick={() => {
-                  if (qrImageUrl) {
-                    const a = document.createElement('a');
-                    a.href = qrImageUrl;
-                    a.download = 'bitly-qr.png';
-                    a.click();
-                  }
-                }}
-              >
-                Download QR
-              </button>
-            )}
           </div>
         </div>
       )}

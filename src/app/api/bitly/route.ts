@@ -8,32 +8,6 @@ const bitlyToken = process.env.BITLY_TOKEN!;
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  // QR code creation logic
-  if (body.create_qr && body.bitly_url) {
-    const bitlink = body.bitly_url.replace(/^https?:\/\//, '');
-    // Fetch QR code from Bitly
-    const qrRes = await fetch(`https://api-ssl.bitly.com/v4/bitlinks/${bitlink}/qr`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${bitlyToken}`,
-        'Accept': 'image/png',
-      },
-    });
-    if (!qrRes.ok) {
-      return NextResponse.json({ error: 'Failed to fetch QR code from Bitly' }, { status: 500 });
-    }
-    // Convert to base64 data URL (for demo; in production, store in S3 or similar)
-    const buffer = Buffer.from(await qrRes.arrayBuffer());
-    const qr_code_url = `data:image/png;base64,${buffer.toString('base64')}`;
-    // Store in Supabase
-    const { error: updateError } = await supabase
-      .from('utm_shortlinks')
-      .update({ qr_code_url })
-      .eq('bitly_url', body.bitly_url);
-    if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
-    return NextResponse.json({ qr_code_url });
-  }
-
   const { utm_url } = body;
   if (!utm_url) return NextResponse.json({ error: 'Missing utm_url' }, { status: 400 });
 
