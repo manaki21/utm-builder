@@ -313,8 +313,8 @@ export default function Page() {
     setTimeout(() => setCopiedHistoryId(null), 1200);
   };
 
-  const allSources = [...sources, ...customSources];
-  const allMediums = [...mediums, ...customMediums];
+  const allSources = [...sources, ...customSources].sort((a, b) => a.localeCompare(b));
+  const allMediums = [...mediums, ...customMediums].sort((a, b) => a.localeCompare(b));
 
   const handleAddCustomSource = () => {
     if (newCustomSource && !allSources.includes(newCustomSource)) {
@@ -559,21 +559,39 @@ export default function Page() {
             onChange={e => setBaseURL(e.target.value)}
           />
           <div className="space-y-2 sm:space-y-3">
-            <select
-              className={`w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-gray-900 text-base ${step === 2 ? 'focus-pulse border-purple-500' : ''}`}
-              value={showCustomSourceInput ? 'custom' : source}
-              onChange={e => {
-                if (e.target.value === 'custom') {
-                  setShowCustomSourceInput(true);
-                } else {
-                  setSource(e.target.value);
-                }
-              }}
-            >
-              <option value="">Select Source</option>
-              {allSources.map(src => <option key={src} value={src}>{src}</option>)}
-              <option value="custom">Add custom…</option>
-            </select>
+            <div className="relative">
+              <select
+                className={`w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-gray-900 text-base ${step === 2 ? 'focus-pulse border-purple-500' : ''}`}
+                value={showCustomSourceInput ? 'custom' : source}
+                onChange={e => {
+                  if (e.target.value === 'custom') {
+                    setShowCustomSourceInput(true);
+                  } else {
+                    setSource(e.target.value);
+                  }
+                }}
+              >
+                <option value="">Select Source</option>
+                {allSources.map(src => <option key={src} value={src}>{src}</option>)}
+                <option value="custom">Add custom…</option>
+              </select>
+              {/* Custom sources delete buttons */}
+              {customSources.length > 0 && (
+                <div className="absolute right-0 top-0 mt-2 mr-2 flex flex-col gap-1 z-10">
+                  {customSources.sort((a, b) => a.localeCompare(b)).map(cs => (
+                    <button
+                      key={cs}
+                      className="text-xs text-red-500 bg-white border border-red-200 rounded px-2 py-0.5 hover:bg-red-50 ml-1"
+                      title={`Remove custom source '${cs}'`}
+                      onClick={() => setCustomSources(prev => prev.filter(s => s !== cs))}
+                      type="button"
+                    >
+                      Remove {cs}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             {showCustomSourceInput && (
               <div className="flex mt-2 gap-2">
                 <input
@@ -594,21 +612,39 @@ export default function Page() {
                 >Cancel</button>
               </div>
             )}
-            <select
-              className={`w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-gray-900 text-base ${step === 3 ? 'focus-pulse border-purple-500' : ''}`}
-              value={showCustomMediumInput ? 'custom' : medium}
-              onChange={e => {
-                if (e.target.value === 'custom') {
-                  setShowCustomMediumInput(true);
-                } else {
-                  setMedium(e.target.value);
-                }
-              }}
-            >
-              <option value="">Select Medium</option>
-              {allMediums.map(med => <option key={med} value={med}>{med}</option>)}
-              <option value="custom">Add custom…</option>
-            </select>
+            <div className="relative">
+              <select
+                className={`w-full p-2 sm:p-3 border border-gray-300 rounded-lg text-gray-900 text-base ${step === 3 ? 'focus-pulse border-purple-500' : ''}`}
+                value={showCustomMediumInput ? 'custom' : medium}
+                onChange={e => {
+                  if (e.target.value === 'custom') {
+                    setShowCustomMediumInput(true);
+                  } else {
+                    setMedium(e.target.value);
+                  }
+                }}
+              >
+                <option value="">Select Medium</option>
+                {allMediums.map(med => <option key={med} value={med}>{med}</option>)}
+                <option value="custom">Add custom…</option>
+              </select>
+              {/* Custom mediums delete buttons */}
+              {customMediums.length > 0 && (
+                <div className="absolute right-0 top-0 mt-2 mr-2 flex flex-col gap-1 z-10">
+                  {customMediums.sort((a, b) => a.localeCompare(b)).map(cm => (
+                    <button
+                      key={cm}
+                      className="text-xs text-red-500 bg-white border border-red-200 rounded px-2 py-0.5 hover:bg-red-50 ml-1"
+                      title={`Remove custom medium '${cm}'`}
+                      onClick={() => setCustomMediums(prev => prev.filter(m => m !== cm))}
+                      type="button"
+                    >
+                      Remove {cm}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             {showCustomMediumInput && (
               <div className="flex mt-2 gap-2">
                 <input
