@@ -52,6 +52,10 @@ export default function Page() {
   // Step state
   const [step, setStep] = useState(1);
 
+  // Favorite state for sources/mediums
+  const [favoriteSources, setFavoriteSources] = useState<string[]>([]);
+  const [favoriteMediums, setFavoriteMediums] = useState<string[]>([]);
+
   // Replace localStorage history logic with API calls
   useEffect(() => {
     async function fetchHistory() {
@@ -155,6 +159,31 @@ export default function Page() {
       localStorage.setItem('customMediums', JSON.stringify(customMediums));
     }
   }, [customSources, customMediums]);
+
+  // Load favorites from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const fs = localStorage.getItem('favoriteSources');
+      if (fs) setFavoriteSources(JSON.parse(fs));
+      const fm = localStorage.getItem('favoriteMediums');
+      if (fm) setFavoriteMediums(JSON.parse(fm));
+    }
+  }, []);
+
+  // Save favorites to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('favoriteSources', JSON.stringify(favoriteSources));
+      localStorage.setItem('favoriteMediums', JSON.stringify(favoriteMediums));
+    }
+  }, [favoriteSources, favoriteMediums]);
+
+  // Helper to sort with favorites on top
+  function sortWithFavorites(list: string[], favorites: string[]) {
+    const favs = list.filter(x => favorites.includes(x)).sort((a, b) => a.localeCompare(b));
+    const rest = list.filter(x => !favorites.includes(x)).sort((a, b) => a.localeCompare(b));
+    return [...favs, ...rest];
+  }
 
   useEffect(() => {
     if (baseURL && source && medium) {
@@ -313,8 +342,8 @@ export default function Page() {
     setTimeout(() => setCopiedHistoryId(null), 1200);
   };
 
-  const allSources = [...sources, ...customSources].sort((a, b) => a.localeCompare(b));
-  const allMediums = [...mediums, ...customMediums].sort((a, b) => a.localeCompare(b));
+  const allSources = sortWithFavorites([...sources, ...customSources], favoriteSources);
+  const allMediums = sortWithFavorites([...mediums, ...customMediums], favoriteMediums);
 
   const handleAddCustomSource = () => {
     if (newCustomSource && !allSources.includes(newCustomSource)) {
@@ -520,6 +549,9 @@ export default function Page() {
     };
   }, [showCustomMediumInput]);
 
+  // Add state for delete confirmation
+  const [pendingDelete, setPendingDelete] = useState<{ type: 'source' | 'medium'; value: string } | null>(null);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100 flex flex-col lg:flex-row items-start justify-center py-4 sm:py-8 px-1 sm:px-2 gap-4 lg:gap-8 relative mt-20 sm:mt-24">
       {/* Add a top header bar */}
@@ -610,9 +642,20 @@ export default function Page() {
                 <div className="py-1">
                   <button className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50" onClick={() => { setSource(''); setShowCustomSourceInput(false); }}>Select Source</button>
                   {allSources.map(src => (
-                    <div key={src} className="flex items-center group">
+                    <div key={src} className={`flex items-center group ${favoriteSources.includes(src) ? 'bg-yellow-50' : ''}`}>
                       <button
-                        className={`flex-1 text-left px-4 py-2 ${source === src ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-700 hover:bg-blue-50'}`}
+                        className={`px-2 py-2 text-yellow-400 hover:text-yellow-600 focus:outline-none bg-transparent`}
+                        title={favoriteSources.includes(src) ? 'Unfavorite' : 'Favorite'}
+                        onClick={e => {
+                          e.stopPropagation();
+                          setFavoriteSources(prev => prev.includes(src) ? prev.filter(s => s !== src) : [...prev, src]);
+                        }}
+                        type="button"
+                      >
+                        {favoriteSources.includes(src) ? '★' : '☆'}
+                      </button>
+                      <button
+                        className={`flex-1 text-left px-2 py-2 ${source === src ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-700 hover:bg-blue-50'}`}
                         onClick={() => { setSource(src); setShowCustomSourceInput(false); }}
                         type="button"
                       >
@@ -622,7 +665,7 @@ export default function Page() {
                         <button
                           className="px-2 py-2 text-red-400 hover:text-red-600 focus:outline-none bg-transparent"
                           title={`Remove custom source '${src}'`}
-                          onClick={() => setCustomSources(prev => prev.filter(s => s !== src))}
+                          onClick={e => { e.stopPropagation(); setPendingDelete({ type: 'source', value: src }); }}
                           type="button"
                         >
                           ×
@@ -669,9 +712,20 @@ export default function Page() {
                 <div className="py-1">
                   <button className="w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-50" onClick={() => { setMedium(''); setShowCustomMediumInput(false); }}>Select Medium</button>
                   {allMediums.map(med => (
-                    <div key={med} className="flex items-center group">
+                    <div key={med} className={`flex items-center group ${favoriteMediums.includes(med) ? 'bg-yellow-50' : ''}`}>
                       <button
-                        className={`flex-1 text-left px-4 py-2 ${medium === med ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-700 hover:bg-blue-50'}`}
+                        className={`px-2 py-2 text-yellow-400 hover:text-yellow-600 focus:outline-none bg-transparent`}
+                        title={favoriteMediums.includes(med) ? 'Unfavorite' : 'Favorite'}
+                        onClick={e => {
+                          e.stopPropagation();
+                          setFavoriteMediums(prev => prev.includes(med) ? prev.filter(mv => mv !== med) : [...prev, med]);
+                        }}
+                        type="button"
+                      >
+                        {favoriteMediums.includes(med) ? '★' : '☆'}
+                      </button>
+                      <button
+                        className={`flex-1 text-left px-2 py-2 ${medium === med ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-700 hover:bg-blue-50'}`}
                         onClick={() => { setMedium(med); setShowCustomMediumInput(false); }}
                         type="button"
                       >
@@ -681,7 +735,7 @@ export default function Page() {
                         <button
                           className="px-2 py-2 text-red-400 hover:text-red-600 focus:outline-none bg-transparent"
                           title={`Remove custom medium '${med}'`}
-                          onClick={() => setCustomMediums(prev => prev.filter(m => m !== med))}
+                          onClick={e => { e.stopPropagation(); setPendingDelete({ type: 'medium', value: med }); }}
                           type="button"
                         >
                           ×
@@ -1058,6 +1112,31 @@ export default function Page() {
                   return <span>(Analytics will appear here)</span>;
                 })()
               ) : <span>(Analytics will appear here)</span>}
+            </div>
+          </div>
+        </div>
+      )}
+      {pendingDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm px-2">
+          <div className="bg-white border border-red-200 rounded-2xl shadow-2xl p-6 flex flex-col gap-3 relative animate-fade-in max-w-xs w-full">
+            <h3 className="text-lg font-bold text-red-700 mb-2">Delete {pendingDelete.type === 'source' ? 'Source' : 'Medium'}</h3>
+            <div className="text-gray-700 mb-4">Are you sure you want to delete <span className="font-semibold">{pendingDelete.value}</span>?</div>
+            <div className="flex gap-3 justify-end">
+              <button
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition"
+                onClick={() => setPendingDelete(null)}
+              >Cancel</button>
+              <button
+                className="px-4 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition"
+                onClick={() => {
+                  if (pendingDelete.type === 'source') {
+                    setCustomSources(prev => prev.filter(s => s !== pendingDelete.value));
+                  } else {
+                    setCustomMediums(prev => prev.filter(m => m !== pendingDelete.value));
+                  }
+                  setPendingDelete(null);
+                }}
+              >Delete</button>
             </div>
           </div>
         </div>
